@@ -167,3 +167,7 @@ These commands are commonly used when:
 - Practiced privilege escalation using `sudo -i`.
 - Reinforced the use of output redirection (`>>`) to preserve command output.
 - Verified user login history using multiple system utilities.
+
+## Personal Reflection
+
+This lab reinforced the importance of monitoring authentication activity as part of routine Linux administration. While the commands themselves are straightforward, understanding when to use each one is essential for troubleshooting login issues and investigating potential security events.
