@@ -1,0 +1,156 @@
+# Lab 02 – Verify User and Group Identity
+
+## Objective
+
+Learn how to identify logged-in users and inspect user and group information using common Linux administrative utilities.
+
+---
+
+## Background
+
+Linux provides several commands that display information about user identities and active sessions. Although many of these commands appear similar, each provides a different level of detail depending on the administrator's needs.
+
+This lab explores the differences between these utilities and demonstrates when each command is most useful.
+
+---
+
+## Environment
+
+- Host: MacBook Pro (Apple Silicon)
+- Hypervisor: VirtualBox
+- Guest OS: Red Hat Enterprise Linux 10.2
+- VM: Server 3
+- User: user1
+
+---
+
+## Skills Demonstrated
+
+- Viewing active user sessions
+- Comparing Linux user information commands
+- Verifying UID and GID information
+- Inspecting group memberships
+- Understanding command output
+
+---
+
+## Commands Used
+
+```bash
+w
+who
+id
+groups
+```
+
+---
+
+## Procedure
+
+### Step 1 — Display Active User Information
+
+Executed:
+
+```bash
+w
+```
+
+The `w` command displayed:
+
+- Logged-in users
+- Login time
+- Terminal (TTY)
+- Idle time
+- Current process
+- System load information
+
+---
+
+### Step 2 — Compare with `who`
+
+Executed:
+
+```bash
+who
+```
+
+Compared the output with `w`.
+
+Observed that:
+
+- Both commands display logged-in users.
+- Both display login time.
+- `who` provides a concise view.
+- `w` provides additional session and activity details.
+
+---
+
+### Step 3 — Verify User Identity
+
+Executed:
+
+```bash
+id
+```
+
+Displayed:
+
+- Username
+- UID
+- Primary GID
+- Supplementary groups
+
+---
+
+### Step 4 — Compare with `groups`
+
+Executed:
+
+```bash
+groups
+```
+
+Observed that:
+
+- `groups` only displays group memberships.
+- `id` provides a more complete overview of the user's identity.
+
+---
+
+## Verification
+
+Confirmed that all commands returned consistent user information and that group memberships displayed by `groups` matched the supplementary groups reported by `id`.
+
+---
+
+## Lessons Learned
+
+Although several Linux commands provide user information, each serves a different purpose.
+
+The `who` command offers a quick summary of active users, while `w` provides additional details such as idle time and the process currently being executed.
+
+Similarly, the `groups` command lists only group memberships, whereas `id` provides a complete identity summary including the UID, primary GID, and supplementary groups.
+
+Choosing the appropriate command depends on the level of detail required.
+
+---
+
+## Real-World Application
+
+System administrators frequently use these commands to:
+
+- Verify user identities
+- Troubleshoot user sessions
+- Confirm group memberships
+- Audit access permissions
+- Monitor logged-in users
+
+---
+
+## Key Takeaways
+
+- Compared multiple Linux user information commands.
+- Learned the difference between `w` and `who`.
+- Learned the difference between `id` and `groups`.
+- Verified user identity using UID and GID information.
+- Reinforced that different Linux utilities provide different levels of administrative detail.
