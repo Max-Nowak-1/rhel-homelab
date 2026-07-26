@@ -1,0 +1,169 @@
+# Lab 01 – Auditing User Login History
+
+## Objective
+
+Learn how to audit successful and unsuccessful user login attempts in Red Hat Enterprise Linux using built-in system utilities. Document login activity by collecting command output into a log file for later analysis.
+
+---
+
+## Background
+
+Monitoring user login activity is an important system administration task used for security auditing, troubleshooting authentication issues, and verifying user access to Linux systems.
+
+This lab demonstrates several common utilities that allow administrators to review login history and preserve audit information for future reference.
+
+---
+
+## Environment
+
+- Host: MacBook Pro (Apple Silicon)
+- Hypervisor: VirtualBox
+- Guest OS: Red Hat Enterprise Linux 10.2
+- User: root
+- VM: Server 3
+
+---
+
+## Skills Demonstrated
+
+- Privilege escalation
+- User login auditing
+- Authentication monitoring
+- Redirecting command output
+- Working with log files
+- Basic Vim editing
+
+---
+
+## Commands Used
+
+```bash
+sudo -i
+last
+lastb
+lastlog
+vim /home/login_audits.log
+last >> /home/login_audits.log
+lastb >> /home/login_audits.log
+lastlog >> /home/login_audits.log
+```
+
+---
+
+## Procedure
+
+### Step 1
+
+Switched to the root account using:
+
+```bash
+sudo -i
+```
+
+Administrative privileges were required to perform system auditing tasks.
+
+---
+
+### Step 2
+
+Displayed the history of successful user logins.
+
+```bash
+last
+```
+
+Observed:
+
+- Usernames
+- Login times
+- Logout times
+- Session duration
+- System reboot events
+
+---
+
+### Step 3
+
+Displayed unsuccessful login attempts.
+
+```bash
+lastb
+```
+
+This command is useful for identifying failed authentication attempts.
+
+---
+
+### Step 4
+
+Reviewed the most recent login for every user account.
+
+```bash
+lastlog
+```
+
+This command also identifies accounts that have never logged in.
+
+---
+
+### Step 5
+
+Created a log file to document audit results.
+
+```bash
+vim /home/login_audits.log
+```
+
+---
+
+### Step 6
+
+Appended command output to the audit file.
+
+```bash
+last >> /home/login_audits.log
+
+lastb >> /home/login_audits.log
+
+lastlog >> /home/login_audits.log
+```
+
+Using the append operator (`>>`) preserved previous command output while adding additional audit information.
+
+---
+
+## Verification
+
+Verified the audit file contained output from all commands.
+
+```bash
+cat /home/login_audits.log
+```
+
+---
+
+## Lessons Learned
+
+This lab demonstrated how Linux administrators can review historical login activity, identify failed authentication attempts, and document audit information using native Linux utilities.
+
+I also reinforced the use of output redirection (`>>`) to build a single audit report from multiple commands.
+
+---
+
+## Real-World Application
+
+These commands are commonly used when:
+
+- Investigating suspicious login activity
+- Performing security audits
+- Troubleshooting authentication issues
+- Reviewing administrator access
+- Creating audit documentation for compliance
+
+## Key Takeaways
+
+- Used Linux utilities to audit successful and unsuccessful login attempts.
+- Collected authentication data into a centralized log file.
+- Practiced privilege escalation using `sudo -i`.
+- Reinforced the use of output redirection (`>>`) to preserve command output.
+- Verified user login history using multiple system utilities.
