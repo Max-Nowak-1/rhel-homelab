@@ -1,0 +1,181 @@
+# Lab 02 – Create a Volume Group and Logical Volumes
+
+## Objective
+
+Initialize a storage device as a Physical Volume (PV), create a Volume Group (VG), allocate storage by creating two Logical Volumes (LVs), and verify the LVM configuration.
+
+---
+
+## Background
+
+Logical Volume Manager (LVM) provides a flexible method for managing storage in Linux. Unlike traditional partitioning, LVM allows administrators to combine one or more storage devices into a storage pool (Volume Group) and allocate storage dynamically through Logical Volumes.
+
+In this lab, the entire disk (`/dev/sdc`) was initialized as a Physical Volume without creating a partition first.
+
+---
+
+## Environment
+
+- Host: MacBook Pro (Apple Silicon)
+- Hypervisor: VirtualBox
+- Guest OS: Red Hat Enterprise Linux 10.2
+- VM: Server 2
+- User: user2 (using `sudo`)
+
+---
+
+## Skills Demonstrated
+
+- Identifying available storage devices
+- Initializing an entire disk as a Physical Volume
+- Creating a Volume Group
+- Creating multiple Logical Volumes
+- Verifying LVM configuration
+- Inspecting Volume Group information
+
+---
+
+## Commands Used
+
+```bash
+lsblk
+
+sudo pvcreate /dev/sdc
+
+sudo pvs
+
+sudo vgcreate -s 8M vg100 /dev/sdc
+
+sudo vgs
+
+sudo lvcreate -L 160M vg100
+
+sudo lvcreate -L 180M -n swapvol vg100
+
+sudo lvs
+
+sudo vgdisplay
+```
+
+---
+
+## Procedure
+
+### Step 1 – Identify Available Storage
+
+Executed:
+
+```bash
+lsblk
+```
+
+Reviewed the available block devices and selected `/dev/sdc` (400 MiB) for use in the lab.
+
+---
+
+### Step 2 – Initialize the Physical Volume
+
+Executed:
+
+```bash
+sudo pvcreate /dev/sdc
+```
+
+Initialized the entire disk as an LVM Physical Volume.
+
+Verified the Physical Volume using:
+
+```bash
+sudo pvs
+```
+
+---
+
+### Step 3 – Create the Volume Group
+
+Executed:
+
+```bash
+sudo vgcreate -s 8M vg100 /dev/sdc
+```
+
+Created a Volume Group named `vg100` with an 8 MiB physical extent size.
+
+Verified the Volume Group using:
+
+```bash
+sudo vgs
+```
+
+---
+
+### Step 4 – Create Logical Volumes
+
+Created the first Logical Volume using the default name (`lvol0`):
+
+```bash
+sudo lvcreate -L 160M vg100
+```
+
+Created a second Logical Volume named `swapvol`:
+
+```bash
+sudo lvcreate -L 180M -n swapvol vg100
+```
+
+Verified both Logical Volumes using:
+
+```bash
+sudo lvs
+```
+
+---
+
+## Screenshots
+
+### Figure 1 – Physical Volume and Volume Group Created
+
+*(Insert screenshot showing the output of `pvs` and `vgs`.)*
+
+---
+
+### Figure 2 – Logical Volumes Successfully Created
+
+*(Insert screenshot showing the output of `lvs` and/or `vgdisplay`.)*
+
+---
+
+## Verification
+
+Verified the LVM configuration using:
+
+```bash
+sudo pvs
+sudo vgs
+sudo lvs
+sudo vgdisplay
+```
+
+These commands confirmed that the Physical Volume, Volume Group, and both Logical Volumes were created successfully.
+
+---
+
+## Lessons Learned
+
+This lab introduced the basic workflow of Logical Volume Manager (LVM). I learned that a Physical Volume can be created directly on an entire disk without first creating a partition. I also learned how Volume Groups combine available storage into a storage pool, allowing multiple Logical Volumes to be created from the available space.
+
+---
+
+## Real-World Application
+
+LVM is commonly used on enterprise Linux servers because it provides flexible storage management. Administrators can allocate storage, create additional Logical Volumes, and expand existing storage without being constrained by traditional partition layouts.
+
+---
+
+## Key Takeaways
+
+- Identified available block devices using `lsblk`.
+- Initialized an entire disk as a Physical Volume.
+- Created a Volume Group using an 8 MiB physical extent size.
+- Created two Logical Volumes from the Volume Group.
+- Verified each stage of the LVM configuration using `pvs`, `vgs`, `lvs`, and `vgdisplay`.
