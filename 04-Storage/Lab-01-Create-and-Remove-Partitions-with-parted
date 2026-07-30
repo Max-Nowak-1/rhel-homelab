@@ -1,0 +1,166 @@
+# Lab 01 – Create and Remove Partitions with Parted
+
+## Objective
+
+Learn how to initialize a disk with a GPT partition table, create multiple partitions using `parted`, verify the partition layout, and safely remove partitions.
+
+---
+
+## Background
+
+Partitioning is one of the first steps in preparing a storage device for use in Linux. System administrators create partitions to organize storage, prepare disks for filesystems, or configure Logical Volume Manager (LVM).
+
+This lab demonstrates the use of the `parted` utility to manage partitions on a secondary disk.
+
+---
+
+## Environment
+
+- Host: MacBook Pro (Apple Silicon)
+- Hypervisor: VirtualBox
+- Guest OS: Red Hat Enterprise Linux 10.2
+- VM: Server 2
+- User: user2
+
+---
+
+## Skills Demonstrated
+
+- Identifying block devices
+- Creating a GPT partition table
+- Creating multiple partitions
+- Verifying partition layouts
+- Removing partitions
+- Using `parted` for disk management
+
+---
+
+## Commands Used
+
+```bash
+lsblk
+
+sudo parted /dev/sdb mklabel gpt
+
+sudo parted /dev/sdb print
+
+sudo parted /dev/sdb mkpart primary 1MiB 150MiB
+
+sudo parted /dev/sdb print
+
+sudo parted /dev/sdb mkpart primary 150MiB 390MiB
+
+sudo parted /dev/sdb print
+
+sudo parted /dev/sdb rm 1
+
+sudo parted /dev/sdb rm 2
+
+sudo parted /dev/sdb print
+```
+
+---
+
+## Procedure
+
+### Step 1 – Identify Available Disks
+
+Executed:
+
+```bash
+lsblk
+```
+
+Reviewed the available block devices and selected `/dev/sdb` as the target disk.
+
+---
+
+### Step 2 – Create a GPT Partition Table
+
+Executed:
+
+```bash
+sudo parted /dev/sdb mklabel gpt
+```
+
+Initialized the disk with a new GPT partition table.
+
+---
+
+### Step 3 – Verify the Partition Table
+
+Executed:
+
+```bash
+sudo parted /dev/sdb print
+```
+
+Confirmed the GPT label was successfully created.
+
+---
+
+### Step 4 – Create the First Partition
+
+Created a primary partition beginning at approximately 1 MiB and ending at 150 MiB.
+
+Verified the new partition using:
+
+```bash
+sudo parted /dev/sdb print
+```
+
+---
+
+### Step 5 – Create the Second Partition
+
+Created a second partition beginning at 150 MiB and ending at 390 MiB.
+
+Verified the updated partition layout.
+
+---
+
+### Step 6 – Remove the Partitions
+
+Removed both partitions individually.
+
+```bash
+sudo parted /dev/sdb rm 1
+
+sudo parted /dev/sdb rm 2
+```
+
+Verified the disk no longer contained any partitions.
+
+---
+
+## Verification
+
+Verified the partition layout throughout the lab using:
+
+```bash
+sudo parted /dev/sdb print
+
+lsblk
+```
+
+---
+
+## Lessons Learned
+
+This lab reinforced the importance of verifying disk changes after each operation. I also learned how to initialize a disk with a GPT partition table, create multiple partitions with `parted`, and safely remove them without affecting other disks.
+
+---
+
+## Real-World Application
+
+Linux administrators regularly partition new storage devices before creating filesystems or configuring Logical Volume Manager (LVM). The ability to verify partition layouts and safely remove partitions is an essential storage administration skill.
+
+---
+
+## Key Takeaways
+
+- Identified available block devices using `lsblk`.
+- Initialized a disk with a GPT partition table.
+- Created multiple partitions using `parted`.
+- Verified partition changes after each operation.
+- Removed partitions safely using `parted`.
