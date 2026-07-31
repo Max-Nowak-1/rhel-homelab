@@ -1,0 +1,235 @@
+# Lab 03 – Expand a Volume Group and Logical Volume
+
+## Objective
+
+Create a new Physical Volume (PV), add it to an existing Volume Group (VG), and extend an existing Logical Volume (LV) by allocating additional storage from the expanded Volume Group.
+
+---
+
+## Background
+
+One of the primary advantages of Logical Volume Manager (LVM) is its flexibility. Instead of being limited by fixed disk partitions, administrators can expand storage by adding new Physical Volumes to an existing Volume Group and allocating the additional space to Logical Volumes without repartitioning disks.
+
+This lab demonstrates the process of expanding available storage by adding a new Physical Volume to an existing Volume Group before increasing the size of a Logical Volume.
+
+### LVM Storage Layout
+
+```text
+/dev/sdc (PV) ─┐
+               ├── vg100 ───► lvol0
+/dev/sdd1 (PV)─┘
+```
+
+---
+
+## Environment
+
+- Host: MacBook Pro (Apple Silicon)
+- Hypervisor: VirtualBox
+- Guest OS: Red Hat Enterprise Linux 10.2
+- VM: Server 2
+- User: user2 (using sudo)
+
+---
+
+## Skills Demonstrated
+
+- Creating a GPT partition table
+- Creating Linux partitions with Parted
+- Initializing a partition as an LVM Physical Volume
+- Extending an existing Volume Group
+- Extending a Logical Volume
+- Verifying LVM configuration
+
+---
+
+## Commands Used
+
+```bash
+lsblk
+
+sudo parted /dev/sdd mklabel gpt
+
+sudo parted /dev/sdd mkpart primary 1MiB 200MiB
+
+sudo pvcreate /dev/sdd1
+
+sudo pvs
+
+sudo vgextend vg100 /dev/sdd1
+
+sudo vgs
+
+sudo vgdisplay
+
+sudo lvs
+
+sudo lvextend -L 300MiB /dev/vg100/lvol0
+
+sudo lvs
+```
+
+---
+
+## Procedure
+
+### Step 1 – Identify Available Storage
+
+Executed:
+
+```bash
+lsblk
+```
+
+Reviewed the available block devices and selected `/dev/sdd`, which contained approximately 400 MiB of available space.
+
+---
+
+### Step 2 – Create a GPT Partition Table
+
+Executed:
+
+```bash
+sudo parted /dev/sdd mklabel gpt
+```
+
+Initialized the disk using a GPT partition table.
+
+---
+
+### Step 3 – Create a Partition
+
+Executed:
+
+```bash
+sudo parted /dev/sdd mkpart primary 1MiB 200MiB
+```
+
+Created partition `/dev/sdd1`.
+
+**Verification**
+
+```bash
+lsblk
+```
+
+Confirmed that `/dev/sdd1` was successfully created.
+
+---
+
+### Step 4 – Initialize the Physical Volume
+
+Executed:
+
+```bash
+sudo pvcreate /dev/sdd1
+```
+
+Initialized `/dev/sdd1` as an LVM Physical Volume.
+
+**Verification**
+
+```bash
+sudo pvs
+```
+
+Confirmed the new Physical Volume was successfully created.
+
+---
+
+### Step 5 – Extend the Volume Group
+
+Executed:
+
+```bash
+sudo vgextend vg100 /dev/sdd1
+```
+
+Added the new Physical Volume to the existing Volume Group (`vg100`).
+
+**Verification**
+
+```bash
+sudo vgs
+
+sudo vgdisplay
+```
+
+Confirmed that the Volume Group now contained additional available storage.
+
+---
+
+### Step 6 – Extend the Logical Volume
+
+Before extending the Logical Volume, the available free space within the Volume Group was verified.
+
+Executed:
+
+```bash
+sudo lvs
+
+sudo vgs
+```
+
+Confirmed that sufficient free space was available to expand `lvol0`.
+
+Extended the Logical Volume to a total size of **300 MiB**.
+
+```bash
+sudo lvextend -L 300MiB /dev/vg100/lvol0
+```
+
+**Verification**
+
+```bash
+sudo lvs
+```
+
+Confirmed that `lvol0` had been successfully expanded to **300 MiB**.
+
+---
+
+## Screenshots
+
+### Figure 1 – Volume Group Expanded
+
+*(Insert screenshot showing `pvs` and `vgs` after running `vgextend`.)*
+
+---
+
+### Figure 2 – Logical Volume Expanded
+
+*(Insert screenshot showing `lvs` before and after extending `lvol0`, or `lvs` and `vgdisplay` after the extension.)*
+
+---
+
+## Lessons Learned
+
+This lab demonstrated how LVM separates physical storage from logical storage. By adding a new Physical Volume to an existing Volume Group, additional storage became available without modifying the original disk. That additional capacity was then allocated to an existing Logical Volume using `lvextend`.
+
+An important part of the process was verifying that the Volume Group contained sufficient free space before attempting to extend the Logical Volume.
+
+## Screenshots
+
+### Figure 1 – Expanded Volume Group and Logical Volume
+
+![Expanded Volume Group and Logical Volume](images/lab03-vg-lv-expanded.png)
+
+The output of `pvs`, `vgs`, and `lvs` confirms that the new Physical Volume (`/dev/sdd1`) was successfully added to `vg100` and that `lvol0` was expanded from 160 MiB to approximately 304 MiB.
+
+---
+
+## Real-World Application
+
+Expanding storage with LVM is a common administrative task in enterprise Linux environments. As servers require additional disk capacity, administrators can add new storage devices, extend existing Volume Groups, and increase Logical Volume sizes without rebuilding partitions or reinstalling operating systems.
+
+---
+
+## Key Takeaways
+
+- Created a GPT partition table.
+- Created a Linux partition.
+- Initialized a partition as a Physical Volume.
+- Added a Physical Volume to an existing Volume Group.
+- Verified available storage before extending a Logical Volume.
+- Successfully expanded an existing Logical Volume to 300 MiB.
