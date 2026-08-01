@@ -1,0 +1,155 @@
+# Lab 04 – Remove Volume Groups and Physical Volumes
+
+## Objective
+
+Safely remove an existing Volume Group (VG) and its associated Physical Volumes (PVs) while verifying that all Logical Volumes (LVs) and LVM metadata have been removed.
+
+---
+
+## Background
+
+LVM components should be removed in the correct order to avoid errors. Since Logical Volumes exist within a Volume Group, removing the Volume Group also removes the Logical Volumes it contains. Once the Volume Group has been deleted, the Physical Volumes can be returned to normal partitions by removing their LVM metadata.
+
+---
+
+## Environment
+
+- Host: MacBook Pro (Apple Silicon)
+- Hypervisor: VirtualBox
+- Guest OS: Red Hat Enterprise Linux 10.2
+- VM: Server 2
+- User: user2 (using sudo)
+
+---
+
+## Skills Demonstrated
+
+- Viewing existing Volume Groups
+- Removing Volume Groups
+- Verifying Logical Volume removal
+- Removing Physical Volumes
+- Understanding the relationship between PVs, VGs, and LVs
+
+---
+
+## Commands Used
+
+```bash
+sudo vgs
+
+sudo vgremove vg100
+
+sudo vgs
+
+sudo lvs
+
+sudo pvs
+
+sudo pvremove /dev/sdd1
+
+sudo pvremove /dev/sdc
+
+lsblk
+```
+
+---
+
+## Procedure
+
+### Step 1 – Verify Existing Volume Groups
+
+Executed:
+
+```bash
+sudo vgs
+```
+
+Confirmed that both the default `rhel` Volume Group and the lab Volume Group (`vg100`) existed.
+
+---
+
+### Step 2 – Remove the Volume Group
+
+Executed:
+
+```bash
+sudo vgremove vg100
+```
+
+Removed the lab Volume Group.
+
+**Verification**
+
+```bash
+sudo vgs
+```
+
+Confirmed that `vg100` no longer existed.
+
+---
+
+### Step 3 – Verify Logical Volumes Were Removed
+
+Executed:
+
+```bash
+sudo lvs
+```
+
+Confirmed that the Logical Volumes created during previous labs were automatically removed when the Volume Group was deleted.
+
+---
+
+### Step 4 – Remove the Physical Volumes
+
+Executed:
+
+```bash
+sudo pvs
+```
+
+Verified which Physical Volumes still contained LVM metadata.
+
+Removed the remaining Physical Volumes:
+
+```bash
+sudo pvremove /dev/sdd1
+
+sudo pvremove /dev/sdc
+```
+
+---
+
+### Step 5 – Verify Cleanup
+
+Executed:
+
+```bash
+lsblk
+```
+
+Confirmed that the partitions remained on the disks, but they were no longer initialized as LVM Physical Volumes.
+
+---
+
+## Lessons Learned
+
+This lab reinforced the dependency between LVM components. Logical Volumes depend on a Volume Group, so removing the Volume Group also removes its Logical Volumes.
+
+It also demonstrated that `pvremove` removes only the LVM metadata from a partition—it does not delete the partition itself. If a partition should also be removed, a partitioning tool such as `parted` must be used separately.
+
+---
+
+## Real-World Application
+
+System administrators frequently remove LVM configurations when decommissioning servers, repurposing storage devices, or rebuilding storage layouts. Following the proper removal order helps prevent configuration issues and leaves disks ready for future use.
+
+---
+
+## Key Takeaways
+
+- Removed an existing Volume Group.
+- Verified automatic removal of Logical Volumes.
+- Removed LVM metadata from Physical Volumes.
+- Verified cleanup using `vgs`, `lvs`, `pvs`, and `lsblk`.
+- Reinforced the relationship between partitions, Physical Volumes, Volume Groups, and Logical Volumes.
