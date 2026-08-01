@@ -1,8 +1,10 @@
 # Red Hat Enterprise Linux Homelab
 
+A hands-on RHCSA study repository documenting Linux administration labs completed on Red Hat Enterprise Linux 10 in a personal virtual lab environment.
+
 ## Overview
 
-This repository documents my hands-on journey learning Linux system administration while preparing for the Red Hat Certified System Administrator (RHCSA) certification.
+This repository documents my hands-on practice learning Linux system administration while preparing for the Red Hat Certified System Administrator (RHCSA) certification.
 
 The purpose of this homelab is to develop practical experience administering Red Hat Enterprise Linux through real-world scenarios. Every lab in this repository is completed in my own virtual environment and includes documentation, commands used, troubleshooting, and lessons learned.
 
@@ -24,18 +26,44 @@ The purpose of this homelab is to develop practical experience administering Red
 
 ---
 
+## Technologies
+
+- Git
+- GitHub
+- Visual Studio Code
+- Bash
+- VirtualBox
+- Red Hat Enterprise Linux 10.2
+
+---
+
 ## Skills Being Developed
+
+### Linux Administration
 
 - Linux System Administration
 - User & Group Management
-- File Permissions & ACLs
-- Storage Management (LVM)
 - Process & Service Management
 - System Boot & Recovery
+
+### Storage
+
+- Disk Partitioning
+- Logical Volume Manager (LVM)
+
+### Security
+
+- File Permissions & ACLs
+- SELinux
+- Firewalld
+
+### Networking
+
 - Networking
 - SSH Administration
-- Firewalld
-- SELinux
+
+### Automation
+
 - Bash Scripting
 - Containers (Podman)
 
@@ -43,21 +71,16 @@ The purpose of this homelab is to develop practical experience administering Red
 
 ## Repository Structure
 
-```
-rhel-homelab/
-
-├── 01-Boot-Process
-├── 02-Systemd
-├── 03-Users-and-Groups
-├── 04-Storage
-├── 05-SELinux
-├── 06-Firewalld
-├── 07-Networking
-├── 08-SSH
-├── 09-Bash
-├── 10-Podman
-└── README.md
-```
+- [01-Boot-Process](01-Boot-Process/)
+- [02-Systemd](02-Systemd/)
+- [03-Users-and-Groups](03-Users-and-Groups/)
+- [04-Storage](04-Storage/)
+- 05-SELinux *(In Progress)*
+- 06-Firewalld *(In Progress)*
+- 07-Networking *(In Progress)*
+- 08-SSH *(In Progress)*
+- 09-Bash *(In Progress)*
+- 10-Podman *(In Progress)*
 
 ---
 
@@ -78,25 +101,24 @@ Each lab includes:
 
 ## Current Progress
 
-- ✅ User & Group Management
-- ⏳ File Permissions
-- ⏳ Process Management
-- ⏳ systemd Services
-- ⏳ Networking
-- ⏳ SSH
-- ⏳ Storage
+- ✅ Boot Process
+- ✅ Systemd
+- ✅ Users & Groups
+- ✅ Storage
 - ⏳ SELinux
 - ⏳ Firewalld
-- ⏳ Bash Scripting
+- ⏳ Networking
+- ⏳ SSH
+- ⏳ Bash
 - ⏳ Podman
 
 ---
 
 ## Why I Built This Repository
 
-One of the best ways to learn Linux is through hands-on practice. This repository serves as a record of my progress as I build the practical skills required of a Linux Systems Administrator.
+I created this repository to document my hands-on RHCSA preparation and develop practical Linux administration skills. Each lab reflects work completed in my personal virtual environment and is documented with commands, verification steps, troubleshooting notes, and lessons learned.
 
-As I continue studying for the RHCSA, I will expand this repository with additional labs covering system administration, troubleshooting, automation, and enterprise Linux concepts.
+My goal is to build a portfolio that demonstrates real-world Linux administration experience while preparing for the RHCSA certification.
 
 ---
 
