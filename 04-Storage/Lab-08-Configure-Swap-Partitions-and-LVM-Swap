@@ -1,0 +1,691 @@
+# Lab 08 – Configure Swap Partitions and LVM Swap
+
+## Objective
+
+Create and configure both a traditional swap partition and an LVM-based swap Logical Volume. Configure both swap areas for persistent activation through `/etc/fstab`, activate them, and verify their status.
+
+This lab also reinforces the relationship between Physical Volumes (PVs), Volume Groups (VGs), Logical Volumes (LVs), and the storage pool provided by LVM.
+
+---
+
+## Background
+
+Linux swap provides disk-backed space that can be used when physical memory is under pressure.
+
+Swap can be implemented in multiple ways. This lab demonstrated two methods:
+
+1. A traditional swap partition.
+2. An LVM Logical Volume configured as swap.
+
+The two configurations were:
+
+```text
+Traditional Swap:
+
+/dev/sde1
+   ↓
+swap
+   ↓
+/etc/fstab
+   ↓
+swapon -a
+```
+
+and:
+
+```text
+LVM Swap:
+
+/dev/sde2
+   ↓
+PV
+   ↓
+vg200
+   ↓
+swapVol
+   ↓
+swap
+   ↓
+/etc/fstab
+   ↓
+swapon -a
+```
+
+---
+
+## Environment
+
+* Host: MacBook Pro (Apple Silicon)
+* Hypervisor: VirtualBox
+* Guest OS: Red Hat Enterprise Linux 10.2
+* VM: Server 2
+* User: user1 (using sudo)
+* Disk used for swap partitions: `/dev/sde`
+* Existing Volume Group: `vg200`
+
+---
+
+## Skills Demonstrated
+
+* Creating an MBR partition table
+* Creating primary partitions
+* Creating a swap partition
+* Applying a swap label
+* Configuring persistent swap activation
+* Using `swapon`
+* Verifying active swap areas
+* Initializing a partition as an LVM Physical Volume
+* Adding a PV to an existing Volume Group
+* Creating an LVM Logical Volume
+* Initializing an LV as swap
+* Configuring an LVM Logical Volume as persistent swap
+* Understanding LVM storage pooling across multiple Physical Volumes
+* Troubleshooting LV allocation
+
+---
+
+## Commands Used
+
+```bash
+lsblk
+
+sudo parted /dev/sde
+
+sudo mkswap /dev/sde1
+
+sudo mkswap -L swappart /dev/sde1
+
+sudo swapon -a
+
+sudo swapon -s
+
+sudo pvcreate /dev/sde2
+
+sudo vgextend vg200 /dev/sde2
+
+sudo pvs
+
+sudo vgs
+
+sudo lvs
+
+sudo vgdisplay vg200
+
+sudo lvcreate -L 180M -n swapVol vg200
+
+sudo mkswap /dev/vg200/swapVol
+
+sudo swapon -a
+
+sudo swapon --show
+```
+
+---
+
+## Procedure
+
+### Step 1 – Identify an Available Disk
+
+Used:
+
+```bash
+lsblk
+```
+
+to identify an available approximately 400 MB disk.
+
+The disk selected for the lab was:
+
+```text
+/dev/sde
+```
+
+The disk had existing storage information, so it was cleaned and prepared for the lab.
+
+---
+
+## Step 2 – Create an MBR Partition Table
+
+The disk was initialized with an MBR partition table.
+
+The MBR partition table is represented by the `msdos` label in `parted`.
+
+The resulting partitioning scheme used the disk as an MBR-partitioned device.
+
+The important distinction is:
+
+```text
+MBR/GPT
+   ↓
+Partition table format
+```
+
+whereas:
+
+```text
+swap/ext4/XFS
+   ↓
+Filesystem/storage structure inside a partition or LV
+```
+
+---
+
+## Step 3 – Create Two Swap/LVM Partitions
+
+The lab required two approximately 100 MB partitions.
+
+The first partition was designated for traditional swap:
+
+```text
+/dev/sde1
+```
+
+The second partition was designated for LVM:
+
+```text
+/dev/sde2
+```
+
+The resulting storage layout was conceptually:
+
+```text
+/dev/sde
+├── /dev/sde1 → swap
+└── /dev/sde2 → LVM PV
+```
+
+---
+
+## Step 4 – Initialize Partition 1 as Swap
+
+Initialized `/dev/sde1` as swap:
+
+```bash
+sudo mkswap /dev/sde1
+```
+
+This created a swap signature on the partition.
+
+The storage relationship became:
+
+```text
+/dev/sde1
+   ↓
+swap
+```
+
+---
+
+## Step 5 – Apply the Swap Label
+
+Applied the required label:
+
+```bash
+sudo mkswap -L swappart /dev/sde1
+```
+
+The swap partition was now identified by the label:
+
+```text
+swappart
+```
+
+The label could be verified using:
+
+```bash
+lsblk -f
+```
+
+---
+
+## Step 6 – Configure the Swap Partition in /etc/fstab
+
+The swap partition was added to `/etc/fstab` using its appropriate swap identification.
+
+The purpose of the `/etc/fstab` entry was to ensure that the swap area would be activated automatically when the system started.
+
+The general configuration was:
+
+```text
+swap partition → /etc/fstab → automatic activation
+```
+
+---
+
+## Step 7 – Activate the Swap Partition
+
+Executed:
+
+```bash
+sudo swapon -a
+```
+
+The `-a` option activates all applicable swap entries configured in `/etc/fstab`.
+
+The swap configuration was then verified using:
+
+```bash
+sudo swapon -s
+```
+
+Confirmed that the traditional swap partition was active.
+
+---
+
+# LVM Swap Configuration
+
+## Step 8 – Initialize Partition 2 as an LVM Physical Volume
+
+Initialized `/dev/sde2` as an LVM Physical Volume:
+
+```bash
+sudo pvcreate /dev/sde2
+```
+
+Verified the PV:
+
+```bash
+sudo pvs
+```
+
+Confirmed that `/dev/sde2` was recognized as a Physical Volume.
+
+The storage hierarchy was now:
+
+```text
+/dev/sde2
+   ↓
+PV
+```
+
+---
+
+## Step 9 – Add the New PV to vg200
+
+Added `/dev/sde2` to the existing Volume Group:
+
+```bash
+sudo vgextend vg200 /dev/sde2
+```
+
+Verified the Volume Group:
+
+```bash
+sudo vgs
+```
+
+The existing `vg200` Volume Group now contained multiple Physical Volumes.
+
+Conceptually:
+
+```text
+/dev/sdc ───┐
+            │
+            ├── vg200
+            │
+/dev/sde2 ──┘
+```
+
+This increased the total storage available within the Volume Group.
+
+---
+
+## Step 10 – Verify the LVM Configuration
+
+The PV configuration was verified with:
+
+```bash
+sudo pvs
+```
+
+The Volume Group was verified with:
+
+```bash
+sudo vgs
+```
+
+Logical Volumes were verified with:
+
+```bash
+sudo lvs
+```
+
+Detailed Volume Group information was verified with:
+
+```bash
+sudo vgdisplay vg200
+```
+
+These commands confirmed that `/dev/sde2` had successfully been added to `vg200`.
+
+---
+
+## Step 11 – Create the swapVol Logical Volume
+
+The lab required a 180 MB Logical Volume named `swapVol`.
+
+Created the Logical Volume:
+
+```bash
+sudo lvcreate -L 180M -n swapVol vg200
+```
+
+The Logical Volume was created from free space in `vg200`.
+
+---
+
+## Important LVM Concept – LV Allocation Across PVs
+
+During the lab, it initially appeared that `swapVol` had been allocated from `/dev/sdc` rather than specifically from `/dev/sde2`.
+
+This was investigated using:
+
+```bash
+sudo lvs -o lv_name,lv_size,vg_name,devices
+```
+
+This behavior was correct.
+
+An important LVM principle was demonstrated:
+
+> A Logical Volume belongs to the Volume Group, not directly to a particular Physical Volume.
+
+Because both `/dev/sdc` and `/dev/sde2` were members of `vg200`, LVM was able to allocate the 180 MB Logical Volume from available Physical Extents in the Volume Group.
+
+The conceptual structure was:
+
+```text
+/dev/sdc ───┐
+            │
+            ├── vg200 ──→ swapVol
+            │
+/dev/sde2 ──┘
+```
+
+LVM does not automatically interpret:
+
+```text
+vgextend vg200 /dev/sde2
+```
+
+as:
+
+> "The next Logical Volume must be created on `/dev/sde2`."
+
+Instead, the Volume Group acts as a pool of available Physical Extents.
+
+---
+
+## Step 12 – Attempt to Force swapVol onto /dev/sde2
+
+To better understand LVM allocation, an attempt was made to explicitly allocate the 180 MB LV from `/dev/sde2`.
+
+The attempt failed because `/dev/sde2` was only approximately 100 MB in size.
+
+Therefore:
+
+```text
+/dev/sde2
+≈ 100 MB available
+```
+
+while:
+
+```text
+swapVol
+= 180 MB
+```
+
+The entire LV could not fit on that single PV.
+
+This reinforced another important LVM concept:
+
+> An LV can span multiple Physical Volumes when the Volume Group has sufficient free extents.
+
+Therefore, the correct solution was to create `swapVol` from the Volume Group without restricting it to `/dev/sde2`.
+
+---
+
+## Step 13 – Initialize swapVol as Swap
+
+Initialized the Logical Volume as swap:
+
+```bash
+sudo mkswap /dev/vg200/swapVol
+```
+
+The resulting storage structure became:
+
+```text
+vg200
+   ↓
+swapVol
+   ↓
+swap
+```
+
+---
+
+## Step 14 – Add swapVol to /etc/fstab
+
+The new LVM-based swap area was added to `/etc/fstab` using its device file.
+
+The configuration referenced:
+
+```text
+/dev/vg200/swapVol
+```
+
+This ensures that the LVM swap area can be activated automatically during system startup.
+
+---
+
+## Step 15 – Activate the LVM Swap
+
+Executed:
+
+```bash
+sudo swapon -a
+```
+
+This activated the swap entry configured in `/etc/fstab`.
+
+---
+
+## Step 16 – Verify Active Swap
+
+Verified the active swap configuration using:
+
+```bash
+sudo swapon --show
+```
+
+The system displayed the active swap areas.
+
+The traditional swap partition and the LVM-based swap were both successfully activated.
+
+The LVM swap may appear through a device-mapper path such as:
+
+```text
+/dev/dm-4
+```
+
+rather than `/dev/vg200/swapVol`.
+
+This is expected because LVM Logical Volumes are implemented through Linux's device-mapper subsystem.
+
+Conceptually:
+
+```text
+/dev/vg200/swapVol
+        ↓
+   device-mapper
+        ↓
+    /dev/dm-X
+```
+
+---
+
+## Final Storage Layout
+
+The final configuration included both traditional and LVM-based swap:
+
+```text
+/dev/sde
+├── /dev/sde1
+│      ↓
+│    swap
+│      ↓
+│    label: swappart
+│
+└── /dev/sde2
+       ↓
+      PV
+       ↓
+     vg200
+       ↓
+    swapVol
+       ↓
+      swap
+```
+
+The existing Volume Group was therefore composed of multiple Physical Volumes:
+
+```text
+/dev/sdc ───┐
+            │
+            ├── vg200
+            │     └── swapVol
+            │
+/dev/sde2 ──┘
+```
+
+The exact Physical Volume allocation of the LV is determined by LVM's free Physical Extents within the Volume Group.
+
+---
+
+## Lessons Learned
+
+This lab demonstrated that swap does not have to be implemented as a traditional disk partition.
+
+Swap can exist as:
+
+```text
+Partition → swap
+```
+
+or:
+
+```text
+LVM Logical Volume → swap
+```
+
+Both are valid Linux configurations.
+
+The lab also reinforced the distinction between a Physical Volume and a Logical Volume.
+
+A Physical Volume provides storage to a Volume Group:
+
+```text
+PV → VG
+```
+
+The Logical Volume is then allocated from the storage pool represented by the Volume Group:
+
+```text
+VG → LV
+```
+
+Therefore, when multiple PVs belong to the same VG, an LV may consume free Physical Extents from more than one PV.
+
+This was demonstrated when the 180 MB `swapVol` could not fit entirely on the approximately 100 MB `/dev/sde2` PV.
+
+---
+
+## Real-World Application
+
+Swap is commonly used on Linux servers to provide additional virtual memory capacity and to handle temporary memory pressure.
+
+Administrators may configure swap as a partition or as an LVM Logical Volume.
+
+LVM-based swap can be particularly flexible because the LV can be extended or managed as part of an existing LVM storage pool.
+
+Persistent swap configuration through `/etc/fstab` ensures that the swap area is automatically activated after reboot.
+
+Understanding `swapon`, `swapoff`, `mkswap`, `/etc/fstab`, LVM, and device-mapper is important when troubleshooting memory and storage configurations on Linux servers.
+
+---
+
+## Key Takeaways
+
+* Created an MBR partition table on the lab disk.
+* Created two approximately 100 MB partitions.
+* Initialized `/dev/sde1` as traditional swap.
+* Applied the `swappart` label to the swap partition.
+* Configured the swap partition in `/etc/fstab`.
+* Activated the swap partition using `swapon -a`.
+* Verified active swap using `swapon -s`.
+* Initialized `/dev/sde2` as an LVM Physical Volume.
+* Added `/dev/sde2` to the existing `vg200` Volume Group.
+* Verified the PV, VG, and LV configuration using `pvs`, `vgs`, `lvs`, and `vgdisplay`.
+* Created the 180 MB `swapVol` Logical Volume.
+* Learned that an LV is allocated from the Volume Group's pool rather than automatically from the most recently added PV.
+* Confirmed that the approximately 100 MB `/dev/sde2` PV could not contain the entire 180 MB `swapVol`.
+* Initialized `swapVol` as swap.
+* Added the LVM swap LV to `/etc/fstab`.
+* Activated the LVM swap using `swapon -a`.
+* Verified the active swap configuration.
+* Learned that LVM Logical Volumes may appear as `/dev/dm-*` through the device-mapper subsystem.
+
+### Swap Architecture
+
+```text
+Traditional Swap:
+
+Partition
+   ↓
+mkswap
+   ↓
+swap
+   ↓
+/etc/fstab
+   ↓
+swapon
+
+
+LVM Swap:
+
+Disk/Partition
+   ↓
+PV
+   ↓
+VG
+   ↓
+LV
+   ↓
+mkswap
+   ↓
+swap
+   ↓
+/etc/fstab
+   ↓
+swapon
+```
+
+### LVM Storage Model
+
+```text
+Physical Disk
+      ↓
+Physical Volume
+      ↓
+Volume Group
+      ↓
+Physical Extents
+      ↓
+Logical Volume
+      ↓
+Filesystem or Swap
+```
+
+The Volume Group acts as the storage pool, allowing Logical Volumes to consume available Physical Extents from the PVs that belong to that VG.

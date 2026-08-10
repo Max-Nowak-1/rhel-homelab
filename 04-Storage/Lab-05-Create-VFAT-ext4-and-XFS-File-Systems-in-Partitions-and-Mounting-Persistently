@@ -1,0 +1,83 @@
+# Lab 05 – Create VFAT, ext4, and XFS File Systems in Partitions and Mount Persistently
+
+## Objective
+
+Create three approximately 70 MB primary partitions on an available 400 MB disk, initialize the partitions with VFAT, ext4, and XFS file systems, manually mount the file systems, determine their UUIDs, configure persistent mounts using `/etc/fstab`, unmount the file systems, and verify that they can be remounted using `mount -a`.
+
+---
+
+## Background
+
+Linux storage consists of several layers. A disk contains a partition table, which defines partitions. Each partition can contain a file system, and a file system can be mounted to a directory so that users and applications can access its contents.
+
+This lab reinforces the relationship between:
+
+```text
+Disk
+  ↓
+Partition Table
+  ↓
+Partition
+  ↓
+File System
+  ↓
+Mount Point
+
+-- 
+
+## Evironment
+
+Host: MacBook Pro (Apple Silicon)
+Hypervisor: VirtualBox
+Guest OS: Red Hat Enterprise Linux 10.2
+VM: Server 2
+User: user2 (using sudo)
+Disk: /dev/sde
+Disk Size: approximately 400 MB
+
+## Skills Demonstrated
+
+Creating an MBR partition table
+Creating primary partitions using parted
+Creating VFAT and ext4 file systems
+Creating mount points
+Manually mounting file systems
+Verifying mounted file systems
+Finding filesystem UUIDs
+Configuring persistent mounts using /etc/fstab
+Unmounting file systems
+Using mount -a
+Verifying persistent mounts
+
+## Commands Used
+
+sudo parted /dev/sde
+
+mklabel msdos
+
+sudo mkfs -t vfat /dev/sde1
+
+sudo mkfs -t ext4 /dev/sde2
+
+sudo mkfs -t xfs /dev/sde3
+
+sudo mkdir /vfatfs5 /ext4fs5
+
+sudo mount /dev/sde1 /vfatfs5
+
+sudo mount /dev/sde2 /ext4fs5
+
+findmnt /dev/sde1
+
+findmnt /dev/sde2
+
+lsblk -f
+
+sudo umount /ext4fs5 /vfatfs5
+
+findmnt /ext4fs5 /vfatfs5
+
+sudo mount -a
+
+df -h
+

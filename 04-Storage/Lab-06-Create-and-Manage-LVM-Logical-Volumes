@@ -1,0 +1,730 @@
+# Lab 06 – Create and Manage LVM Logical Volumes
+
+## Objective
+
+Initialize an available 400 MB disk for use with LVM, create a Physical Volume (PV), create a Volume Group (`vg200`) with an 8 MB Physical Extent (PE) size, create two Logical Volumes (`lv200` and `lv300`), initialize the logical volumes with different file system types, create mount points, configure persistent mounting through `/etc/fstab`, and verify the final configuration.
+
+---
+
+## Background
+
+LVM (Logical Volume Management) provides an abstraction layer between physical storage and file systems.
+
+The basic LVM hierarchy used in this lab is:
+
+```text
+Physical Disk
+     ↓
+Physical Volume (PV)
+     ↓
+Volume Group (VG)
+     ↓
+Physical Extents (PE)
+     ↓
+Logical Volumes (LV)
+     ↓
+File Systems
+     ↓
+Mount Points
+```
+
+The lab used a 400 MB disk and configured an 8 MB Physical Extent size.
+
+The requested Logical Volumes were:
+
+* `lv200` → 120 MB
+* `lv300` → 100 MB
+
+Because LVM allocates storage in whole Physical Extents, the 100 MB request could not be represented exactly using 8 MB extents.
+
+---
+
+## Environment
+
+* Host: MacBook Pro (Apple Silicon)
+* Hypervisor: VirtualBox
+* Guest OS: Red Hat Enterprise Linux 10.2
+* VM: Server 2
+* User: user1 (using sudo)
+* Disk: `/dev/sdd`
+* Disk Size: approximately 400 MB
+
+---
+
+## Skills Demonstrated
+
+* Identifying an unused disk
+* Initializing a disk as an LVM Physical Volume
+* Creating a Volume Group
+* Configuring Physical Extent size
+* Creating Logical Volumes
+* Calculating Logical Volume sizes using Physical Extents
+* Verifying PVs, VGs, and LVs
+* Inspecting detailed Volume Group information
+* Creating ext4 file systems
+* Troubleshooting an XFS filesystem creation failure
+* Creating mount points
+* Manually mounting Logical Volumes
+* Configuring `/etc/fstab`
+* Using `mount -a`
+* Verifying mounted filesystems
+
+---
+
+## Commands Used
+
+```bash
+lsblk
+
+sudo fdisk -l /dev/sdd
+
+sudo pvcreate /dev/sdd
+
+sudo pvs
+
+sudo vgcreate -s 8M vg200 /dev/sdd
+
+sudo vgs
+
+sudo lvcreate -l 15 -n lv200 vg200
+
+sudo lvcreate -l 13 -n lv300 vg200
+
+sudo lvs
+
+sudo pvs
+
+sudo vgs
+
+sudo vgdisplay vg200
+
+sudo mkfs.ext4 /dev/vg200/lv200
+
+sudo mkfs.xfs /dev/vg200/lv300
+
+lsblk -f
+
+sudo mkdir /lvmfs5 /lvmfs6
+
+sudo mount /dev/vg200/lv200 /lvmfs5
+
+sudo umount /lvmfs5
+
+sudo mount -a
+
+lsblk -f
+
+df -h
+```
+
+---
+
+## Procedure
+
+### Step 1 – Identify the Available Disk
+
+Used `lsblk` to identify an available disk:
+
+```bash
+lsblk
+```
+
+The system contained a 400 MB disk with no partitions or mount points:
+
+```text
+/dev/sdd
+```
+
+The disk was selected for the lab.
+
+Before modifying the disk, the device was independently verified:
+
+```bash
+sudo fdisk -l /dev/sdd
+```
+
+Confirmed that `/dev/sdd` was an available disk suitable for use in the lab.
+
+---
+
+### Step 2 – Initialize the Disk as an LVM Physical Volume
+
+Initialized `/dev/sdd` as an LVM Physical Volume:
+
+```bash
+sudo pvcreate /dev/sdd
+```
+
+The command successfully created the Physical Volume.
+
+Verified the PV:
+
+```bash
+sudo pvs
+```
+
+Confirmed that `/dev/sdd` appeared as a Physical Volume.
+
+At this point, the storage hierarchy was:
+
+```text
+/dev/sdd
+   ↓
+Physical Volume (PV)
+```
+
+---
+
+### Step 3 – Create the Volume Group
+
+Created Volume Group `vg200` with an 8 MB Physical Extent size:
+
+```bash
+sudo vgcreate -s 8M vg200 /dev/sdd
+```
+
+The `-s 8M` option specifies that each Physical Extent in the Volume Group is 8 MB.
+
+Verified the Volume Group:
+
+```bash
+sudo vgs
+```
+
+The Volume Group was created successfully.
+
+The usable Volume Group size was approximately:
+
+```text
+392 MB
+```
+
+The difference between the nominal 400 MB disk size and the usable LVM capacity is due to storage metadata and allocation overhead.
+
+The resulting hierarchy was:
+
+```text
+/dev/sdd
+   ↓
+PV
+   ↓
+vg200
+   ↓
+8 MB Physical Extents
+```
+
+---
+
+### Step 4 – Calculate the Required Physical Extents
+
+The first Logical Volume requested by the lab was 120 MB.
+
+With an 8 MB PE size:
+
+```text
+120 MB ÷ 8 MB = 15 PE
+```
+
+Therefore, `lv200` could be created exactly using 15 Physical Extents.
+
+The second Logical Volume requested was 100 MB:
+
+```text
+100 MB ÷ 8 MB = 12.5 PE
+```
+
+LVM cannot allocate half of a Physical Extent.
+
+Therefore:
+
+```text
+12 PE × 8 MB = 96 MB
+13 PE × 8 MB = 104 MB
+```
+
+Because 12 PE would be smaller than the requested 100 MB, 13 PE was selected.
+
+This resulted in:
+
+```text
+lv200 → 15 PE → 120 MB
+lv300 → 13 PE → 104 MB
+```
+
+---
+
+### Step 5 – Create LV200
+
+Created `lv200` using 15 Physical Extents:
+
+```bash
+sudo lvcreate -l 15 -n lv200 vg200
+```
+
+Verified the Logical Volume:
+
+```bash
+sudo lvs
+```
+
+Confirmed:
+
+```text
+lv200 → 120 MB
+```
+
+The size was exactly as expected:
+
+```text
+15 PE × 8 MB = 120 MB
+```
+
+---
+
+### Step 6 – Create LV300
+
+Created `lv300` using 13 Physical Extents:
+
+```bash
+sudo lvcreate -l 13 -n lv300 vg200
+```
+
+Verified the Logical Volume:
+
+```bash
+sudo lvs
+```
+
+Confirmed:
+
+```text
+lv300 → 104 MB
+```
+
+The size was:
+
+```text
+13 PE × 8 MB = 104 MB
+```
+
+The Logical Volume was slightly larger than the requested 100 MB because LVM must allocate whole Physical Extents.
+
+---
+
+## Step 7 – Verify the LVM Configuration
+
+Verified the Physical Volume:
+
+```bash
+sudo pvs
+```
+
+The important values were approximately:
+
+```text
+PV       VG      PSize    PFree
+/dev/sdd vg200   392M     168M
+```
+
+The 168 MB of free space was calculated as:
+
+```text
+392 MB total
+- 224 MB allocated
+= 168 MB free
+```
+
+The allocated space consisted of:
+
+```text
+lv200 = 120 MB
+lv300 = 104 MB
+
+120 + 104 = 224 MB
+```
+
+---
+
+### Step 8 – Verify the Volume Group
+
+Executed:
+
+```bash
+sudo vgs
+```
+
+Confirmed:
+
+```text
+VG      PV   LV   VSize   VFree
+vg200   1    2    392M    168M
+```
+
+This confirmed that:
+
+* `vg200` contains 1 Physical Volume.
+* `vg200` contains 2 Logical Volumes.
+* The usable VG size is approximately 392 MB.
+* 168 MB remains available for future Logical Volumes.
+
+---
+
+### Step 9 – Verify the Logical Volumes
+
+Executed:
+
+```bash
+sudo lvs
+```
+
+Confirmed:
+
+```text
+lv200 → 120 MB
+lv300 → 104 MB
+```
+
+The Logical Volume sizes matched the PE calculations.
+
+---
+
+### Step 10 – Verify Physical Extents Using vgdisplay
+
+Executed:
+
+```bash
+sudo vgdisplay vg200
+```
+
+The Volume Group had:
+
+```text
+PE Size       → 8 MB
+Total PE      → 49
+Allocated PE  → 28
+Free PE       → 21
+```
+
+The calculations were:
+
+```text
+49 total PE × 8 MB = 392 MB
+
+15 PE for lv200
++ 13 PE for lv300
+= 28 allocated PE
+
+49 total PE
+- 28 allocated PE
+= 21 free PE
+
+21 free PE × 8 MB
+= 168 MB free
+```
+
+This confirmed that the PV, VG, PE allocation, and LV sizes were internally consistent.
+
+---
+
+## Step 11 – Create the ext4 File System
+
+Initialized `lv200` with an ext4 file system:
+
+```bash
+sudo mkfs.ext4 /dev/vg200/lv200
+```
+
+The command completed successfully.
+
+The resulting configuration was:
+
+```text
+/dev/vg200/lv200
+        ↓
+      ext4
+```
+
+---
+
+## Step 12 – Attempt to Create the XFS File System
+
+Attempted to initialize `lv300` with XFS:
+
+```bash
+sudo mkfs.xfs /dev/vg200/lv300
+```
+
+The command failed with an error indicating that the XFS filesystem must be larger than approximately 300 MB.
+
+The Logical Volume was only:
+
+```text
+104 MB
+```
+
+Therefore, the XFS filesystem could not be created in the lab environment.
+
+This was the same filesystem-size limitation encountered in the previous lab.
+
+The available free space in the Volume Group was only:
+
+```text
+168 MB
+```
+
+Even if all remaining VG space were allocated to `lv300`, the resulting LV would only be:
+
+```text
+104 MB + 168 MB = 272 MB
+```
+
+This would still be below the approximately 300 MB XFS minimum reported by the system.
+
+Therefore, the XFS requirement could not be satisfied using the available 400 MB disk while maintaining the other lab requirements.
+
+The LVM configuration was left unchanged rather than altering the lab's requested storage layout.
+
+---
+
+## Step 13 – Verify the Filesystem State
+
+Executed:
+
+```bash
+lsblk -f
+```
+
+Confirmed:
+
+```text
+lv200 → ext4
+lv300 → no filesystem
+```
+
+This verification demonstrated that the failed XFS creation did not leave a filesystem on `lv300`.
+
+The final usable filesystem configuration was therefore:
+
+```text
+lv200 → 120 MB → ext4
+lv300 → 104 MB → no filesystem
+```
+
+---
+
+## Step 14 – Create Mount Points
+
+Created the mount points specified by the lab:
+
+```bash
+sudo mkdir /lvmfs5 /lvmfs6
+```
+
+The directories were created successfully.
+
+The intended configuration was:
+
+```text
+lv200 → /lvmfs5
+lv300 → /lvmfs6
+```
+
+Because `lv300` did not have a filesystem, only `/lvmfs5` could be used for a functional filesystem mount.
+
+---
+
+## Step 15 – Manually Mount LV200
+
+Mounted the ext4 filesystem manually:
+
+```bash
+sudo mount /dev/vg200/lv200 /lvmfs5
+```
+
+The mount completed successfully.
+
+The resulting storage path was:
+
+```text
+/dev/vg200/lv200
+        ↓
+      ext4
+        ↓
+    /lvmfs5
+```
+
+The mount was verified successfully.
+
+---
+
+## Step 16 – Configure /etc/fstab
+
+The lab specifically required filesystem information to be added to `/etc/fstab` using the **device files**.
+
+The following entry was added:
+
+```text
+/dev/vg200/lv200 /lvmfs5 ext4 defaults 0 0
+```
+
+This entry contains:
+
+```text
+Device
+Mount Point
+Filesystem Type
+Mount Options
+Dump
+Filesystem Check
+```
+
+The device path was used instead of a UUID because the lab explicitly requested device files.
+
+---
+
+## Step 17 – Unmount the Filesystem
+
+Manually unmounted the filesystem:
+
+```bash
+sudo umount /lvmfs5
+```
+
+The filesystem was successfully unmounted.
+
+---
+
+## Step 18 – Test the /etc/fstab Configuration
+
+Executed:
+
+```bash
+sudo mount -a
+```
+
+The `-a` option instructs `mount` to mount all applicable filesystems listed in `/etc/fstab`.
+
+The ext4 filesystem was successfully remounted at `/lvmfs5`.
+
+This demonstrated that the `/etc/fstab` configuration was valid.
+
+---
+
+## Step 19 – Final Verification
+
+Verified the filesystem configuration:
+
+```bash
+lsblk -f
+```
+
+Confirmed that `lv200` contained the ext4 filesystem.
+
+Verified the mounted filesystem and disk usage:
+
+```bash
+df -h
+```
+
+Confirmed that the filesystem was successfully mounted and available to the operating system.
+
+The final LVM configuration was:
+
+```text
+/dev/sdd
+   ↓
+PV
+   ↓
+vg200
+   │
+   ├── lv200
+   │     └── 120 MB
+   │          └── ext4
+   │               └── /lvmfs5
+   │
+   └── lv300
+         └── 104 MB
+              └── XFS creation failed
+```
+
+---
+
+## Lessons Learned
+
+This lab reinforced the complete LVM storage hierarchy and demonstrated how Physical Volumes, Volume Groups, Physical Extents, Logical Volumes, filesystems, and mount points relate to one another.
+
+The lab also demonstrated the importance of Physical Extent size. Because the Volume Group used an 8 MB PE size, Logical Volumes must be allocated in whole 8 MB increments.
+
+This meant that 120 MB could be represented exactly:
+
+```text
+15 × 8 MB = 120 MB
+```
+
+but 100 MB could not:
+
+```text
+12.5 × 8 MB = 100 MB
+```
+
+Therefore, 13 PE were required for `lv300`, resulting in a 104 MB Logical Volume.
+
+The lab also reinforced the importance of verifying failed operations. When XFS creation failed, `lsblk -f` was used to confirm that `lv300` remained without a filesystem.
+
+The XFS minimum-size restriction was an environmental limitation that conflicted with the lab's requested 100 MB XFS Logical Volume. The available disk did not contain enough additional space to increase the LV beyond the reported 300 MB minimum while preserving the rest of the lab configuration.
+
+---
+
+## Real-World Application
+
+LVM is widely used by Linux administrators because it provides flexible storage management.
+
+Logical Volumes can be created independently of physical disk partitions and can later be extended when additional storage is required.
+
+Administrators must understand Physical Extent allocation because the extent size determines the granularity at which LVM can allocate storage.
+
+Filesystem requirements must also be considered when planning Logical Volume sizes. Different filesystem implementations can have different minimum or maximum size requirements.
+
+Using `/etc/fstab` allows filesystems to be automatically mounted during system startup, while using device paths or UUIDs provides persistent filesystem identification.
+
+---
+
+## Key Takeaways
+
+* Identified an unused 400 MB disk using `lsblk`.
+* Verified the disk before modifying it with `fdisk`.
+* Initialized `/dev/sdd` as an LVM Physical Volume.
+* Created Volume Group `vg200`.
+* Configured an 8 MB Physical Extent size.
+* Created `lv200` using 15 PE for exactly 120 MB.
+* Created `lv300` using 13 PE for 104 MB.
+* Learned that LVM allocates Logical Volumes using whole Physical Extents.
+* Verified the LVM configuration using `pvs`, `vgs`, `lvs`, and `vgdisplay`.
+* Created an ext4 filesystem on `lv200`.
+* Attempted to create XFS on `lv300` and identified the approximately 300 MB minimum-size limitation in the lab environment.
+* Verified that the failed XFS operation did not create a filesystem.
+* Created mount points `/lvmfs5` and `/lvmfs6`.
+* Manually mounted the ext4 filesystem at `/lvmfs5`.
+* Added the device path to `/etc/fstab`.
+* Unmounted the filesystem.
+* Used `mount -a` to remount it from `/etc/fstab`.
+* Verified the final configuration using `lsblk -f` and `df -h`.
+* Reinforced the complete Linux storage hierarchy:
+
+```text
+Disk
+ ↓
+Physical Volume
+ ↓
+Volume Group
+ ↓
+Physical Extents
+ ↓
+Logical Volume
+ ↓
+File System
+ ↓
+Mount Point
+ ↓
+/etc/fstab
+```
