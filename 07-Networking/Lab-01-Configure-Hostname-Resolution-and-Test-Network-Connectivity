@@ -1,0 +1,590 @@
+# Lab 01 – Configure Hostname Resolution and Test Network Connectivity
+
+## Objective
+
+Configure hostname resolution between two RHEL servers by adding host-to-IP mappings to the `/etc/hosts` file and verify network connectivity between the systems using their assigned IP addresses and hostnames.
+
+This lab also reinforced systematic network troubleshooting by working through the network stack from interface and IP configuration down to Layer 2 connectivity and ARP.
+
+## Environment
+
+- Host: MacBook Pro
+- Hypervisor: VirtualBox
+- Guest OS: Red Hat Enterprise Linux
+- Servers: Server10 and Server30
+- Network interfaces: enp0s8 and enp0s9
+
+## Network Configuration
+
+### Server10
+
+enp0s8:
+192.168.68.2
+
+enp0s9:
+172.10.10.110/24
+
+### Server30
+
+enp0s8:
+192.168.68.17
+
+enp0s9:
+172.10.10.120/24
+
+The enp0s9 interfaces were used for the dedicated network between Server10 and Server30.
+
+Both systems were configured on the 172.10.10.0/24 subnet.
+
+## VirtualBox Network Configuration
+
+A second virtual network adapter was added to both Server10 and Server30.
+
+The second adapter appeared in RHEL as enp0s9.
+
+Both VirtualBox Adapter 2 configurations were verified as:
+
+Enabled: Yes
+Attached to: Internal Network
+Name: intnet
+
+Using the same Internal Network name allowed both virtual machines to communicate through the same isolated Layer 2 network.
+
+## Commands Used
+
+    ip addr
+    ip addr show enp0s9
+    ip route
+    ip route get 172.10.10.120
+    ip route get 172.10.10.110
+    ip link show enp0s9
+    ping -c 4 172.10.10.120
+    ping -c 4 172.10.10.110
+    ip neigh show 172.10.10.120
+    sudo arping -c 4 -I enp0s9 172.10.10.120
+    sudo tcpdump -ni enp0s9 arp
+    cat /etc/hosts
+
+## Procedure
+
+### Step 1 – Configure the Second Network Adapter
+
+A second virtual network adapter was added to both Server10 and Server30.
+
+The adapter appeared in RHEL as:
+
+enp0s9
+
+The VirtualBox configuration was set to:
+
+Attached to: Internal Network
+Name: intnet
+
+The adapter was enabled on both systems.
+
+### Step 2 – Verify the Network Interfaces
+
+The network configuration was checked with:
+
+    ip addr
+
+The new interfaces were identified as enp0s9.
+
+Server10 was configured with:
+
+172.10.10.110/24
+
+Server30 was configured with:
+
+172.10.10.120/24
+
+Both interfaces were confirmed to be operational.
+
+### Step 3 – Verify the Network Prefix
+
+Both interfaces used a /24 prefix.
+
+The /24 prefix corresponds to the subnet mask:
+
+255.255.255.0
+
+Both systems were therefore members of:
+
+172.10.10.0/24
+
+Because both systems were on the same subnet, they should be able to communicate directly without requiring a router.
+
+### Step 4 – Verify Interface State
+
+The interface state was checked with:
+
+    ip link show enp0s9
+
+Both systems showed enp0s9 as operational.
+
+The interfaces showed both:
+
+UP
+
+and:
+
+LOWER_UP
+
+UP confirmed that the interface was administratively enabled.
+
+LOWER_UP confirmed that the underlying virtual network link was active.
+
+### Step 5 – Test Connectivity Using IP Addresses
+
+Connectivity was first tested using the IP address instead of the hostname.
+
+From Server10:
+
+    ping -c 4 172.10.10.120
+
+The initial test failed with:
+
+Destination Host Unreachable
+
+This was an important troubleshooting result because it demonstrated that the problem was not hostname resolution.
+
+If the IP address itself cannot be reached, changing /etc/hosts will not fix the underlying connectivity problem.
+
+### Step 6 – Verify Routing
+
+The routing configuration was examined using:
+
+    ip route
+
+The specific route to Server30 was then checked with:
+
+    ip route get 172.10.10.120
+
+Server10 correctly selected enp0s9 as the interface for traffic destined for 172.10.10.120.
+
+The same check was performed on Server20:
+
+    ip route get 172.10.10.110
+
+Server20 also correctly selected enp0s9.
+
+This confirmed that the Linux routing configuration was correct.
+
+### Step 7 – Verify the VirtualBox Internal Network
+
+The VirtualBox configuration for Adapter 2 was checked on both systems.
+
+Server10:
+
+Enabled: Yes
+Attached to: Internal Network
+Name: intnet
+
+Server30:
+
+Enabled: Yes
+Attached to: Internal Network
+Name: intnet
+
+Both systems were therefore connected to the same VirtualBox Internal Network.
+
+### Step 8 – Verify MAC Addresses
+
+The MAC addresses of the interfaces were checked with:
+
+    ip link show enp0s9
+
+Server10 had the MAC address:
+
+08:00:27:db:38:70
+
+Server30 had the MAC address:
+
+08:00:27:0c:5d:80
+
+The MAC addresses were different, confirming that the two virtual network interfaces did not have duplicate MAC addresses.
+
+### Step 9 – Investigate ARP
+
+Because the IP addresses, subnet, routing, interface state, and VirtualBox network configuration were correct, Layer 2 connectivity was investigated.
+
+The ARP neighbor table was checked on Server10 with:
+
+    ip neigh show 172.10.10.120
+
+No entry was returned.
+
+This indicated that Server10 had not successfully learned the MAC address associated with Server30's IP address.
+
+### Step 10 – Test ARP Directly
+
+ARP was tested directly using:
+
+    sudo arping -c 4 -I enp0s9 172.10.10.120
+
+The ARP requests were sent from Server10 toward Server30, but initially no ARP responses were received.
+
+This confirmed that the problem existed below the IP and hostname-resolution layers.
+
+### Step 11 – Observe ARP Traffic with tcpdump
+
+Because both virtual machines could be run at the same time, packet-level troubleshooting was performed.
+
+On Server30, tcpdump was started:
+
+    sudo tcpdump -ni enp0s9 arp
+
+The command was left running so that ARP traffic arriving at Server30 could be observed.
+
+From Server10, ARP traffic was then generated with:
+
+    sudo arping -c 4 -I enp0s9 172.10.10.120
+
+The tcpdump capture showed that traffic was being received on Server30's enp0s9 interface.
+
+The final capture reported:
+
+17 packets captured, 17 received
+
+This confirmed that the VirtualBox Internal Network was carrying traffic between the two virtual machines.
+
+This was an important troubleshooting step because it allowed the actual network traffic to be observed rather than simply assuming where the problem existed.
+
+### Step 12 – Configure Hostname Resolution
+
+After the network configuration and connectivity were established, the /etc/hosts file was used for local hostname resolution.
+
+The file was checked with:
+
+    cat /etc/hosts
+
+The appropriate IP-to-hostname mappings were added to both servers.
+
+The purpose of these entries was to allow each server to resolve the other server's hostname locally without relying on DNS.
+
+The /etc/hosts file provides static hostname-to-IP mappings.
+
+For example, a conceptual entry could look like:
+
+172.10.10.120 server20
+
+This tells Server10 that the hostname server30 corresponds to 172.10.10.120.
+
+However, the /etc/hosts entry itself does not create network connectivity.
+
+### Step 13 – Test Hostname Resolution and Connectivity
+
+Once the underlying network connectivity was working, the configured hostnames could be used to test connectivity.
+
+This demonstrated the difference between:
+
+IP connectivity
+
+and:
+
+Hostname resolution
+
+The troubleshooting process followed this general sequence:
+
+VirtualBox network
+→ Network interface
+→ IP address
+→ Subnet
+→ Routing
+→ ARP / Layer 2
+→ IP connectivity
+→ Hostname resolution
+
+This helped establish that hostname resolution is a higher-level function that depends on an already functioning network.
+
+## Troubleshooting Process
+
+The most important part of this lab was troubleshooting the failed connectivity between Server10 and Server30.
+
+The initial problem appeared to be that the hostnames could not reach each other. However, instead of immediately changing /etc/hosts, the connection was tested using the IP addresses directly.
+
+The IP ping failed with:
+
+Destination Host Unreachable
+
+This demonstrated that hostname resolution was not the root cause.
+
+The troubleshooting process then moved downward through the network stack.
+
+First, the IP addresses were verified.
+
+Server10:
+
+172.10.10.110/24
+
+Server30:
+
+172.10.10.120/24
+
+Next, the interfaces were verified to be UP and LOWER_UP.
+
+The subnet configuration was verified to place both systems on:
+
+172.10.10.0/24
+
+Routing was then checked with ip route and ip route get.
+
+Both systems correctly selected enp0s9 for traffic destined for the other server.
+
+The VirtualBox configuration was then checked.
+
+Both Adapter 2 interfaces were:
+
+Enabled
+Internal Network
+intnet
+
+The MAC addresses were also checked and were unique.
+
+Because the IP configuration and routing were correct, ARP was investigated.
+
+The command:
+
+    ip neigh show 172.10.10.120
+
+returned no neighbor entry.
+
+ARP was then tested directly with:
+
+    sudo arping -c 4 -I enp0s9 172.10.10.120
+
+No responses were initially received.
+
+Finally, tcpdump was used on Server30 to directly observe ARP traffic:
+
+    sudo tcpdump -ni enp0s9 arp
+
+The ARP traffic was successfully observed on Server30.
+
+This confirmed that the VirtualBox Internal Network was passing traffic between the two virtual machines.
+
+The connectivity issue was ultimately resolved, and communication between the two servers was successfully established.
+
+## Important Networking Concepts Learned
+
+### /etc/hosts
+
+The /etc/hosts file provides static hostname-to-IP mappings.
+
+It can be used for:
+
+- Small environments
+- Testing
+- Development systems
+- Isolated networks
+- Systems where DNS is unavailable
+- Simple local hostname resolution
+
+However, /etc/hosts does not create network connectivity.
+
+If Server10 has:
+
+172.10.10.120 server30
+
+in /etc/hosts, Linux knows that server30 corresponds to 172.10.10.120.
+
+It does not mean that 172.10.10.120 is necessarily reachable.
+
+The network itself must already be functioning.
+
+### Subnetting
+
+Both servers used /24 addresses:
+
+172.10.10.110/24
+172.10.10.120/24
+
+The /24 prefix means the subnet mask is:
+
+255.255.255.0
+
+Both addresses therefore belong to:
+
+172.10.10.0/24
+
+Because both systems are on the same subnet, they can communicate directly at Layer 2.
+
+### Routing
+
+The ip route get command was useful for determining exactly how Linux would send traffic to a destination.
+
+For Server10:
+
+    ip route get 172.10.10.120
+
+Linux selected enp0s9.
+
+For Server30:
+
+    ip route get 172.10.10.110
+
+Linux selected enp0s9.
+
+This demonstrated that routing was not the problem.
+
+### ARP
+
+ARP stands for Address Resolution Protocol.
+
+ARP is used by IPv4 systems to determine the MAC address associated with an IP address on the local network.
+
+The basic process is:
+
+Server10 wants to communicate with 172.10.10.120.
+
+Server10 broadcasts an ARP request asking:
+
+"Who has 172.10.10.120?"
+
+Server20 receives the request and responds with its MAC address.
+
+Server10 can then use the MAC address to deliver the Ethernet frame to Server20.
+
+The general process is:
+
+Server10
+→ ARP broadcast
+→ Server20
+→ ARP reply
+→ Server10 learns Server20's MAC address
+→ IP communication proceeds
+
+The ip neigh command can be used to view learned neighbor information.
+
+### arping
+
+The arping command allows ARP to be tested directly.
+
+Example:
+
+    sudo arping -c 4 -I enp0s9 172.10.10.120
+
+This is useful because it tests Layer 2 ARP communication without relying on ICMP ping.
+
+### tcpdump
+
+tcpdump allows network traffic to be observed directly.
+
+The command used in this lab was:
+
+    sudo tcpdump -ni enp0s9 arp
+
+The options mean:
+
+-n prevents hostname and service-name resolution.
+
+-i specifies the interface to listen on.
+
+arp filters the capture to ARP traffic.
+
+Using tcpdump provided direct evidence that packets were reaching Server30.
+
+## Layer-by-Layer Troubleshooting Model
+
+This lab reinforced a systematic troubleshooting model.
+
+When network communication fails, work from the lower layers upward.
+
+1. Virtual network / physical connection
+2. Network interface
+3. Interface state
+4. IP address
+5. Subnet mask / prefix
+6. Routing
+7. ARP / Layer 2
+8. IP connectivity
+9. Firewall
+10. Hostname resolution
+11. Application or service
+
+This approach prevents unrelated configuration changes.
+
+For example, if:
+
+    ping 172.10.10.120
+
+fails, there is no reason to immediately edit /etc/hosts.
+
+The problem exists below hostname resolution.
+
+If:
+
+    ping 172.10.10.120
+
+works but:
+
+    ping server20
+
+fails, then hostname resolution becomes a logical area to investigate.
+
+## Why This Troubleshooting Method Matters
+
+A common mistake in Linux administration is to change several things at once.
+
+For example, if a server cannot communicate with another server, an inexperienced administrator might immediately:
+
+- Edit /etc/hosts
+- Restart NetworkManager
+- Change the IP address
+- Change the firewall
+- Change the routing table
+- Reconfigure the VM adapter
+
+Doing all of those at once makes it difficult to determine what actually fixed the problem.
+
+A better approach is to test one layer at a time.
+
+In this lab, the problem was isolated through:
+
+    ip addr
+    ip link
+    ip route
+    ping
+    ip neigh
+    arping
+    tcpdump
+
+Each command answered a different question.
+
+## Key Takeaways
+
+- Added a second virtual network adapter to Server10.
+- Added a second virtual network adapter to Server30.
+- Configured both second adapters as VirtualBox Internal Network adapters.
+- Used the same Internal Network name, intnet, on both systems.
+- Configured Server10 with 172.10.10.110/24.
+- Configured Server30 with 172.10.10.120/24.
+- Verified both systems were on the same 172.10.10.0/24 subnet.
+- Verified enp0s9 was UP and LOWER_UP on both servers.
+- Verified Linux routing using ip route and ip route get.
+- Tested direct IP connectivity using ping.
+- Determined that the initial failure was not caused by /etc/hosts.
+- Investigated the ARP neighbor table using ip neigh.
+- Tested ARP directly using arping.
+- Verified the virtual network was carrying packets using tcpdump.
+- Verified the MAC addresses were unique.
+- Configured local hostname resolution using /etc/hosts.
+- Successfully established communication between Server10 and Server30.
+- Practiced systematic network troubleshooting from Layer 2 upward.
+- Learned the difference between hostname resolution and actual network connectivity.
+
+## Final Result
+
+Server10 and Server30 were successfully configured with a dedicated 172.10.10.0/24 network using their enp0s9 interfaces.
+
+The VirtualBox Internal Network named intnet provided the Layer 2 connection between the two virtual machines.
+
+Both servers were configured with the appropriate IP addresses and verified routes.
+
+The initial connectivity failure was investigated systematically rather than assuming that /etc/hosts was the cause.
+
+ARP was tested directly with arping and network traffic was observed using tcpdump.
+
+After troubleshooting the network at the interface, IP, routing, and Layer 2 levels, communication between Server10 and Server30 was successfully established.
+
+The lab demonstrated that hostname resolution and network connectivity are separate concepts and reinforced the importance of troubleshooting Linux networking one layer at a time.
