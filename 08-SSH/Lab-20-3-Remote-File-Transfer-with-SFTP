@@ -1,0 +1,54 @@
+## Lab 20-3: Remote File Transfer with SFTP
+
+### Objective
+
+Use SFTP to transfer files between `server30` and `server20`, demonstrating the `put` and `get` commands.
+
+### Procedure
+
+On `server30`, while logged in as `user1`, connect to `server20` using SFTP:
+
+    sftp user1@server20
+
+Enter the `user1` password for `server20` if prompted.
+
+The prompt changes to:
+
+    sftp>
+
+Upload a test file from `server30` to `server20` using:
+
+    put testfile
+
+The `put` command transfers the file:
+
+    server30 → server20
+
+Verify that the file exists on the remote server using:
+
+    ls
+
+Next, download the file from `server20` back to `server30`:
+
+    get testfile
+
+The `get` command transfers the file:
+
+    server20 → server30
+
+After returning to the normal shell on `server30`, verify the downloaded file:
+
+    ls
+
+Exit the SFTP session:
+
+    quit
+
+### Key Concepts
+
+From the perspective of the SFTP client:
+
+    put → local → remote
+    get → remote → local
+
+In this lab, `server30` is the local SFTP client and `server20` is the remote server.
