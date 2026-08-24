@@ -1,0 +1,59 @@
+## Lab 20-1: Establish Key-Based Authentication
+
+### Objective
+
+Configure SSH key-based authentication between `server30` and `server20` for a new `user20` account. The goal is to allow `user20` to connect from `server30` to `server20` without entering a password on subsequent SSH connections.
+
+### Procedure
+
+First, on both `server20` and `server30`, create the `user20` account and assign a password:
+
+    sudo useradd user20
+    sudo passwd user20
+
+On `server30`, switch to the `user20` account:
+
+    su - user20
+
+Generate an SSH private/public key pair using `ssh-keygen`:
+
+    ssh-keygen
+
+When prompted for the file location, accept the default. When prompted for a passphrase, leave it blank because the lab specifically requires a key pair without a passphrase.
+
+This creates two files in `~/.ssh/`:
+
+    id_rsa
+    id_rsa.pub
+
+The private key (`id_rsa`) remains on `server30` and should never be distributed. The public key (`id_rsa.pub`) can be copied to the remote server.
+
+Distribute the public key to `server20` using:
+
+    ssh-copy-id user20@server20
+
+Enter the `user20` password for `server20` when prompted.
+
+Next, log in to `server20` as `user20`:
+
+    ssh user20@server20
+
+The first connection may display a host authenticity/fingerprint prompt. Accept the fingerprint when prompted.
+
+After successfully logging in, exit:
+
+    exit
+
+Attempt the SSH connection again:
+
+    ssh user20@server20
+
+The second connection should authenticate without asking for the `user20` password.
+
+### Key Concepts
+
+The private key remains on the client (`server30`), while the public key is placed on the remote server (`server20`) in:
+
+    ~/.ssh/authorized_keys
+
+The SSH server uses the authorized public key to verify that the connecting client possesses the corresponding private key. This provides authentication without requiring the user to enter their account password each time.
