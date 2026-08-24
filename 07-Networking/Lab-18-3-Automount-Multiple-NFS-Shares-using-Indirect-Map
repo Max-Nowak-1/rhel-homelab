@@ -1,0 +1,173 @@
+## Lab 18-3: Automount Multiple NFS Shares Using Indirect Map
+
+### Objective
+
+Create and export two NFS shares on `server30` and configure AutoFS on `server10` to automatically mount both shares under a common parent directory using an indirect map.
+
+### Environment
+
+- NFS Server: `server30`
+- NFS Client: `server10`
+- NFS Shares:
+  - `/sharenfs1`
+  - `/sharenfs2`
+- AutoFS Parent Directory: `/multishare`
+- AutoFS Map: `/etc/auto.misc`
+
+### Step 1: Create Both NFS Share Directories
+
+On `server30`:
+
+    sudo mkdir /sharenfs1 /sharenfs2
+
+Both directories can be created in a single `mkdir` command.
+
+### Step 2: Configure Both NFS Exports
+
+Edit `/etc/exports`:
+
+    sudo vim /etc/exports
+
+Add:
+
+    /sharenfs1 server10(rw)
+    /sharenfs2 server10(rw)
+
+This exports both directories to `server10` with read/write permissions.
+
+### Step 3: Export Both Shares
+
+Apply the export configuration:
+
+    sudo exportfs -av
+
+### Step 4: Create the AutoFS Parent Directory
+
+On `server10`:
+
+    sudo mkdir /multishare
+
+### Step 5: Configure the AutoFS Master Map
+
+Edit `/etc/auto.master`:
+
+    sudo vim /etc/auto.master
+
+Add:
+
+    /multishare /etc/auto.misc
+
+This tells AutoFS to use `/multishare` as the parent directory and `/etc/auto.misc` as the indirect map.
+
+### Step 6: Configure Both Indirect Map Entries
+
+Edit `/etc/auto.misc`:
+
+    sudo vim /etc/auto.misc
+
+Add:
+
+    sharenfs1 server30:/sharenfs1
+    sharenfs2 server30:/sharenfs2
+
+The key names are:
+
+    sharenfs1
+    sharenfs2
+
+These become the directories underneath `/multishare`.
+
+The resulting paths are:
+
+    /multishare/sharenfs1
+    /multishare/sharenfs2
+
+### Step 7: Reload AutoFS
+
+After modifying the AutoFS configuration:
+
+    sudo systemctl reload autofs
+
+### Step 8: Trigger the First Automount
+
+Run:
+
+    ls /multishare/sharenfs1
+
+This triggers AutoFS to mount:
+
+    server30:/sharenfs1
+
+### Step 9: Trigger the Second Automount
+
+Run:
+
+    ls /multishare/sharenfs2
+
+This triggers AutoFS to mount:
+
+    server30:/sharenfs2
+
+### Step 10: Verify Both Mounts
+
+Run:
+
+    df -h
+
+Both NFS shares should now appear as mounted.
+
+### Key Concept
+
+An indirect map makes it easy to manage multiple shares under one common parent directory.
+
+    /multishare
+        │
+        ├── sharenfs1 → server30:/sharenfs1
+        │
+        └── sharenfs2 → server30:/sharenfs2
+
+The client accesses the **key names** under the parent directory, while AutoFS handles the actual NFS mounts.
+
+---
+
+## Summary: Direct vs. Indirect Maps
+
+### Direct Map
+
+Master map:
+
+    /- /etc/auto.master.d/mntauto
+
+Direct map:
+
+    /mntauto server30:/sharenfs
+
+The complete mount path is explicitly defined in the map:
+
+    /mntauto
+
+### Indirect Map
+
+Master map:
+
+    /autoindir /etc/auto.misc
+
+Indirect map:
+
+    sharenfs server30:/sharenfs
+
+The master map provides the **parent**, and the key provides the **child directory**:
+
+    /autoindir/sharenfs
+
+### General AutoFS Workflow
+
+For both types of maps, the general process is:
+
+1. NFS server exports the share
+2. AutoFS master map identifies the map
+3. Direct/indirect map defines the NFS mount
+4. AutoFS is reloaded
+5. Client accesses the path
+6. AutoFS triggers the mount
+7. `df -h` verifies the mount
