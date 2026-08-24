@@ -1,0 +1,99 @@
+## Lab 18-2: Automount NFS Share Using Indirect Map
+
+### Objective
+
+Configure AutoFS on `server10` to automatically mount the existing NFS share from `server30` using an **indirect map** under the parent directory `/autoindir`.
+
+### Environment
+
+- NFS Server: `server30`
+- NFS Client: `server10`
+- Existing NFS Share: `/sharenfs`
+- AutoFS Parent Directory: `/autoindir`
+- AutoFS Map: `/etc/auto.misc`
+- Key Name: `sharenfs`
+
+### Step 1: Create the Parent Directory
+
+On `server10`:
+
+    sudo mkdir /autoindir
+
+This creates the parent directory under which the indirect map will create its automounted entries.
+
+### Step 2: Configure the AutoFS Master Map
+
+Edit `/etc/auto.master`:
+
+    sudo vim /etc/auto.master
+
+Add:
+
+    /autoindir /etc/auto.misc
+
+This tells AutoFS:
+
+> Use `/autoindir` as the parent directory and use `/etc/auto.misc` as the indirect map containing the mounting instructions.
+
+### Step 3: Configure the Indirect Map
+
+Edit `/etc/auto.misc`:
+
+    sudo vim /etc/auto.misc
+
+Add:
+
+    sharenfs server30:/sharenfs
+
+Here, `sharenfs` is the **key name**.
+
+The key name becomes the directory that the client accesses:
+
+    /autoindir/sharenfs
+
+The actual NFS export remains:
+
+    server30:/sharenfs
+
+### Step 4: Reload AutoFS
+
+After modifying the configuration:
+
+    sudo systemctl reload autofs
+
+### Step 5: Trigger the Automount
+
+Run:
+
+    ls /autoindir/sharenfs
+
+Accessing this path causes AutoFS to automatically mount:
+
+    server30:/sharenfs
+
+at:
+
+    /autoindir/sharenfs
+
+### Step 6: Verify the Mount
+
+Run:
+
+    df -h
+
+The NFS share should appear as mounted under `/autoindir/sharenfs`.
+
+### Key Concept
+
+With an **indirect map**, the master map defines the **parent directory**, while the indirect map defines the **key names** underneath that parent.
+
+    /etc/auto.master
+            │
+            └── /autoindir → /etc/auto.misc
+                                  │
+                                  └── sharenfs → server30:/sharenfs
+                                                       │
+                                                       ▼
+                                            /autoindir/sharenfs
+
+The client does not need to know the actual exported directory name to access the share. It accesses the key name defined in the indirect map.
