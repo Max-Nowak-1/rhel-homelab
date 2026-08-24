@@ -1,0 +1,75 @@
+## Lab 20-2: Test the Effect of the PermitRootLogin Directive
+
+### Objective
+
+Demonstrate how the `PermitRootLogin` directive in `/etc/ssh/sshd_config` controls whether the root account can log in through SSH.
+
+### Procedure
+
+On `server30`, edit the SSH daemon configuration:
+
+    sudo vim /etc/ssh/sshd_config
+
+Locate:
+
+    PermitRootLogin
+
+Change the directive to:
+
+    PermitRootLogin no
+
+Save the configuration file.
+
+Before restarting the service, the configuration can be checked for syntax errors with:
+
+    sudo sshd -t
+
+If no output is returned, the configuration passes the syntax check.
+
+Restart the SSH daemon:
+
+    sudo systemctl restart sshd
+
+From `server20`, attempt to SSH into `server30` as root:
+
+    ssh root@server30
+
+The connection should be rejected with a message similar to:
+
+    Permission denied
+
+### Restore the Configuration
+
+Reverse the change on `server30` by restoring the original value of `PermitRootLogin`.
+
+In the lab environment, the original setting was:
+
+    PermitRootLogin prohibit-password
+
+After restoring the setting, verify the configuration:
+
+    sudo sshd -t
+
+Restart SSH:
+
+    sudo systemctl restart sshd
+
+From `server20`, attempt the connection again:
+
+    ssh root@server30
+
+The root account should once again be permitted to authenticate if the restored configuration allows the authentication method being used.
+
+### Troubleshooting Note
+
+During this lab, the original configuration on the lab VM was:
+
+    PermitRootLogin prohibit-password
+
+This setting allows root SSH authentication using methods such as public-key authentication, but does not allow root to authenticate using a password.
+
+Therefore, restoring `prohibit-password` does not make password-based root SSH login successful. The successful password-based portion of this exercise requires the starting configuration to permit password-based root login, such as:
+
+    PermitRootLogin yes
+
+This was an important troubleshooting lesson: always distinguish between the configuration file's original value and the configuration assumed by the textbook exercise.
