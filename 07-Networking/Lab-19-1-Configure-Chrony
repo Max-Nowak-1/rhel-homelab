@@ -1,0 +1,90 @@
+## Lab 19-1: Configure Chrony
+
+### Objective
+
+Install Chrony on `server10`, configure the Chrony service to start automatically at system boot, configure it to use the local system clock as its time source, and verify the configured time source.
+
+### Environment
+
+- System: `server10`
+- User: `user1` with `sudo`
+- Time Synchronization Service: `chronyd`
+- Chrony Configuration: `/etc/chrony.conf`
+- Time Source: `127.127.1.0`
+
+### Step 1: Install Chrony
+
+Install the Chrony package:
+
+    sudo dnf install chrony
+
+Chrony provides the `chronyd` daemon and the `chronyc` command used to manage and verify time synchronization.
+
+### Step 2: Enable Chrony at System Boot
+
+Configure the Chrony service to start automatically when the system boots:
+
+    sudo systemctl enable chronyd
+
+### Step 3: Edit the Chrony Configuration
+
+Open the Chrony configuration file:
+
+    sudo vim /etc/chrony.conf
+
+Comment out all existing lines beginning with:
+
+    pool
+
+or:
+
+    server
+
+To comment out a line, place `#` at the beginning of the line.
+
+For example:
+
+    # pool 2.pool.ntp.org iburst
+    # server 0.pool.ntp.org iburst
+
+### Step 4: Add the Local System Clock
+
+Go to the end of `/etc/chrony.conf` and add:
+
+    server 127.127.1.0
+
+The address `127.127.1.0` represents the local system clock as an NTP reference source. This is appropriate for this isolated lab exercise.
+
+### Step 5: Start Chrony
+
+Start the Chrony service:
+
+    sudo systemctl start chronyd
+
+If the configuration was modified after the service was already running, restart Chrony so that `chronyd` reads the updated configuration:
+
+    sudo systemctl restart chronyd
+
+### Step 6: Verify the Time Source
+
+Run:
+
+    chronyc sources
+
+This displays the NTP sources that Chrony is using.
+
+The output should show the local system clock represented by:
+
+    127.127.1.0
+
+### Key Concept
+
+Chrony uses the `chronyd` daemon to perform time synchronization. The `/etc/chrony.conf` file defines its configuration and time sources, while `chronyc` provides a command-line interface for inspecting and interacting with the running daemon.
+
+For this isolated lab, the local system clock is used as the time source:
+
+    127.127.1.0
+          ↓
+       chronyd
+          ↓
+    system clock
