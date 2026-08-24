@@ -1,0 +1,104 @@
+## Lab 18-1: Automount NFS Share Using Direct Map
+
+### Objective
+
+Configure an NFS share on `server30` and use AutoFS with a **direct map** on `server10` to automatically mount the share at `/mntauto`.
+
+### Environment
+
+- NFS Server: `server30`
+- NFS Client: `server10`
+- NFS Share: `/sharenfs`
+- Direct Mount Point: `/mntauto`
+
+### Step 1: Create the NFS Share on server30
+
+Create the directory that will be exported:
+
+    sudo mkdir /sharenfs
+
+### Step 2: Configure the NFS Export
+
+Edit `/etc/exports`:
+
+    sudo vim /etc/exports
+
+Add:
+
+    /sharenfs server10(rw)
+
+This exports `/sharenfs` to `server10` with read/write permissions.
+
+### Step 3: Export the NFS Share
+
+Apply the export configuration:
+
+    sudo exportfs -av
+
+This makes the configured NFS export available to the client.
+
+### Step 4: Enable and Start AutoFS on server10
+
+On `server10`:
+
+    sudo systemctl --now enable autofs
+
+### Step 5: Configure the Direct Mount Point
+
+Create the mount-point directory:
+
+    sudo mkdir /mntauto
+
+### Step 6: Configure the AutoFS Master Map
+
+Edit `/etc/auto.master`:
+
+    sudo vim /etc/auto.master
+
+Add:
+
+    /- /etc/auto.master.d/mntauto
+
+The `/-` tells AutoFS that this is a **direct map**. The second field specifies the file containing the direct-map instructions.
+
+### Step 7: Create the Direct Map
+
+Create the map file:
+
+    sudo vim /etc/auto.master.d/mntauto
+
+Add:
+
+    /mntauto server30:/sharenfs
+
+This tells AutoFS to mount the `/sharenfs` export from `server30` at `/mntauto`.
+
+### Step 8: Reload AutoFS
+
+After modifying the AutoFS configuration:
+
+    sudo systemctl reload autofs
+
+### Step 9: Trigger the Automount
+
+Access the mount point:
+
+    ls /mntauto
+
+Accessing `/mntauto` triggers AutoFS to mount the NFS share.
+
+### Step 10: Verify the Mount
+
+Run:
+
+    df -h
+
+The output should show the NFS share from `server30` mounted at `/mntauto`.
+
+### Key Concept
+
+A **direct map** specifies the exact path where an NFS share will be mounted.
+
+    server30:/sharenfs
+            ↓
+        /mntauto
