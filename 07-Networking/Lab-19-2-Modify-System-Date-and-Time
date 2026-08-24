@@ -1,0 +1,116 @@
+## Lab 19-2: Modify System Date and Time
+
+### Objective
+
+Use `date` and `timedatectl` to examine the current system date and time, modify the system date to a future date, observe the change, and then re-enable NTP to synchronize the system clock with the current time.
+
+### Environment
+
+- System: `server10`
+- User: `user1` with `sudo`
+- Time Management Tool: `timedatectl`
+- Date/Time Command: `date`
+
+### Step 1: Check the Current Date and Time
+
+Run:
+
+    date
+
+This displays the current system date and time in a human-readable format.
+
+Then run:
+
+    timedatectl
+
+This provides more detailed information about the system's time configuration.
+
+### Step 2: Compare the Outputs
+
+The `date` command primarily provides the **current system date and time**.
+
+`timedatectl` provides additional information, including:
+
+- Local time
+- Universal Time (UTC)
+- RTC time
+- Time zone
+- Whether the system clock is synchronized
+- Whether NTP is enabled
+- The NTP service being used
+
+Therefore, `timedatectl` provides a broader overview of the system's time configuration than `date`.
+
+### Step 3: Change the System Date
+
+Use `timedatectl` to set the system clock to a future date.
+
+For example:
+
+    sudo timedatectl set-time "2026-08-25 12:00:00"
+
+The exact future date and time should be changed according to the exercise requirements.
+
+### Step 4: Observe the New Date and Time
+
+Run:
+
+    date
+
+and:
+
+    timedatectl
+
+The output should now show the manually configured future date and time.
+
+### Step 5: Re-enable NTP
+
+Re-enable network time synchronization:
+
+    sudo timedatectl set-ntp true
+
+This tells the system to resume using NTP for time synchronization.
+
+### Step 6: Verify the System Time
+
+Run:
+
+    date
+
+and/or:
+
+    timedatectl
+
+The system should synchronize its clock and return from the manually configured future date to the current synchronized time.
+
+### Key Concept
+
+`date` and `timedatectl` both provide information about the system clock, but they serve different purposes.
+
+    date
+      ↓
+    Quick view of the current system date/time
+
+while:
+
+    timedatectl
+      ↓
+    Detailed system time configuration
+      ↓
+    Timezone
+    UTC time
+    RTC time
+    NTP status
+    Synchronization status
+
+The `timedatectl set-ntp true` command re-enables NTP synchronization after the system clock has been manually modified.
+
+### Important Commands
+
+    date
+
+    timedatectl
+
+    sudo timedatectl set-time "YYYY-MM-DD HH:MM:SS"
+
+    sudo timedatectl set-ntp true
