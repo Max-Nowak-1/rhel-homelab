@@ -1,0 +1,98 @@
+## Lab 20-4: Local File Transfer with SFTP
+
+### Objective
+
+Use SFTP's local-directory functionality to control the local working directory and transfer files between `server20` and `server30`.
+
+### Procedure
+
+On `server20`, while logged in as `user1`, connect to `server30`:
+
+    sftp user1@server30
+
+Enter the `user1` password for `server30` if prompted.
+
+At the SFTP prompt, use `lcd` to change the local directory on `server20`:
+
+    lcd /home/user1
+
+Verify the local working directory:
+
+    lpwd
+
+The local directory should display:
+
+    /home/user1
+
+To upload a file from `server20` to `server30`, use:
+
+    put fke3
+
+The transfer direction is:
+
+    server20 → server30
+
+Verify the file exists on the remote server:
+
+    ls
+
+To download a file from `server30` to `server20`, use:
+
+    get filename
+
+The transfer direction is:
+
+    server30 → server20
+
+The downloaded file will be placed in the current local directory on `server20`.
+
+Verify the local file using:
+
+    lls
+
+Exit the SFTP session:
+
+    bye
+
+### Important Note About `lput` and `lget`
+
+The textbook exercise refers to `lput` and `lget`, but the OpenSSH SFTP client used in the lab environment does not recognize those commands.
+
+The correct OpenSSH commands are:
+
+    lcd  → change local directory
+    lpwd → display local directory
+    lls  → list local files
+    put  → upload local → remote
+    get  → download remote → local
+
+Therefore, the functional equivalent of the textbook's intended workflow is:
+
+    lcd /home/user1
+    lpwd
+    put fke3
+    ls
+    get filename
+    lls
+    bye
+
+The important distinction is that `lcd`, `lpwd`, and `lls` explicitly operate on the local filesystem, while `ls` and `pwd` operate on the remote filesystem.
+
+### Key Concepts
+
+The `l` in commands such as `lcd`, `lpwd`, and `lls` identifies the local side of the SFTP connection.
+
+The transfer commands themselves are:
+
+    put → local → remote
+    get → remote → local
+
+For example:
+
+    server20                         server30
+       │                                │
+       │──────── put file ─────────────→│
+       │                                │
+       │←──────── get file ─────────────│
+
+This provides a useful mental model for understanding file transfers while working inside an SFTP session.
