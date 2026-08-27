@@ -1,0 +1,54 @@
+# Lab 21-1: Add Service to a Firewall
+
+## Objective
+
+As `user1` with `sudo` privileges on `server30`, permanently allow HTTPS traffic through the default firewalld zone. Verify that the rule was added to the zone configuration and that firewalld recognizes the service.
+
+## Steps
+
+First, verify the current default zone:
+
+```bash
+sudo firewall-cmd --get-default-zone
+```
+
+Add HTTPS as a permanent service rule to the default zone:
+
+```bash
+sudo firewall-cmd --permanent --zone=public --add-service=https
+```
+
+Reload firewalld so the permanent configuration becomes active:
+
+```bash
+sudo firewall-cmd --reload
+```
+
+Verify that HTTPS is now listed as an allowed service:
+
+```bash
+sudo firewall-cmd --zone=public --list-services
+```
+
+The output should include:
+
+```text
+https
+```
+
+The persistent zone configuration can also be viewed directly:
+
+```bash
+sudo cat /etc/firewalld/zones/public.xml
+```
+
+The XML file should contain an HTTPS service entry similar to:
+
+```xml
+<service name="https"/>
+```
+
+## Result
+
+HTTPS traffic was permanently added to the default `public` zone. The configuration was activated with `firewall-cmd --reload`, and the rule was verified both through `firewall-cmd` and the zone's XML configuration file.
+
