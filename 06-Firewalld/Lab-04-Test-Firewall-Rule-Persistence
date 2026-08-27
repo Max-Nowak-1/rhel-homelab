@@ -1,0 +1,61 @@
+# Lab 04: Test Firewall Rule Persistence
+
+## Objective
+
+As `user1` with `sudo` privileges on `server30`, test the difference between runtime and permanent firewalld configurations by first adding TCP port `9000` as a runtime-only rule and verifying that it disappears after a reboot. Then add the same rule permanently and verify that it persists after another reboot.
+
+## Steps
+
+Add TCP port `9000` to the runtime configuration of the default zone:
+
+sudo firewall-cmd --zone=public --add-port=9000/tcp
+
+Verify that the port is currently allowed:
+
+sudo firewall-cmd --zone=public --list-ports
+
+The output should include:
+
+9000/tcp
+
+Reboot the system:
+
+sudo reboot
+
+After the system restarts, verify that port `9000` is no longer present:
+
+sudo firewall-cmd --zone=public --list-ports
+
+Because the rule was added without the `--permanent` option, it existed only in the runtime configuration and was lost when the system rebooted.
+
+Now add the same rule permanently:
+
+sudo firewall-cmd --permanent --zone=public --add-port=9000/tcp
+
+Reload firewalld to activate the permanent rule:
+
+sudo firewall-cmd --reload
+
+Verify that the rule is active:
+
+sudo firewall-cmd --zone=public --list-ports
+
+The output should include:
+
+9000/tcp
+
+Reboot the system again:
+
+sudo reboot
+
+After the system restarts, verify the port once more:
+
+sudo firewall-cmd --zone=public --list-ports
+
+The output should still include:
+
+9000/tcp
+
+## Result
+
+The first `9000/tcp` rule was added only to the runtime configuration and disappeared after reboot. The second rule was added with `--permanent`, activated with `--reload`, and remained present after reboot. This demonstrated the difference between firewalld's runtime and permanent configurations.
