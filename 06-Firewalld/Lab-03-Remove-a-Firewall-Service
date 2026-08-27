@@ -1,0 +1,43 @@
+# Lab 03: Remove a Firewall Service
+
+## Objective
+
+As `user1` with `sudo` privileges on `server30`, remove the runtime rule allowing the SSH service from the default firewalld zone. Verify that SSH access from `server20` is blocked, then restore the SSH rule and confirm that SSH access works again.
+
+## Steps
+
+First, verify that SSH is currently allowed in the default zone:
+
+sudo firewall-cmd --zone=public --list-services
+
+Remove the SSH service from the runtime configuration:
+
+sudo firewall-cmd --zone=public --remove-service=ssh
+
+Verify that SSH is no longer listed:
+
+sudo firewall-cmd --zone=public --list-services
+
+From `server20`, attempt to SSH into `server30`:
+
+ssh server30
+
+The connection should fail because the firewall is no longer allowing SSH traffic through the `public` zone.
+
+Return to `server30` and restore the SSH service to the runtime configuration:
+
+sudo firewall-cmd --zone=public --add-service=ssh
+
+Verify that SSH is allowed again:
+
+sudo firewall-cmd --zone=public --list-services
+
+From `server20`, attempt the SSH connection again:
+
+ssh server30
+
+The SSH connection should now succeed.
+
+## Result
+
+The runtime SSH firewall rule was successfully removed from the default `public` zone, preventing SSH access from `server20`. The SSH service was then restored to the runtime configuration, allowing SSH access to `server30` again.
