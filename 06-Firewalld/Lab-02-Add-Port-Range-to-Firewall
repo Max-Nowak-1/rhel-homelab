@@ -1,0 +1,35 @@
+# Lab 02: Add Port Range to Firewall
+
+## Objective
+
+As `user1` with `sudo` privileges on `server30`, permanently allow UDP ports `8000` through `8005` in the `trusted` firewalld zone. Verify the configuration using both the zone's XML file and `firewall-cmd`.
+
+## Steps
+
+Add the UDP port range to the permanent configuration of the `trusted` zone:
+
+sudo firewall-cmd --permanent --zone=trusted --add-port=8000-8005/udp
+
+Reload firewalld to activate the permanent configuration:
+
+sudo firewall-cmd --reload
+
+Verify that the UDP port range is active:
+
+sudo firewall-cmd --zone=trusted --list-ports
+
+The output should include:
+
+8000-8005/udp
+
+The persistent zone configuration can also be viewed directly:
+
+sudo cat /etc/firewalld/zones/trusted.xml
+
+The XML file should contain an entry similar to:
+
+<port protocol="udp" port="8000-8005"/>
+
+## Result
+
+UDP ports `8000` through `8005` were permanently allowed in the `trusted` zone. The configuration was activated with `firewall-cmd --reload` and verified through both `firewall-cmd` and the persistent zone XML file.
