@@ -1,0 +1,99 @@
+# Lab 02 – Modifying Context on Files
+
+## Objective
+
+The objective of this lab was to modify SELinux file contexts and understand the difference between changing a context directly, creating a persistent file-context mapping, and applying that mapping to the filesystem.
+
+## Procedure
+
+### 1. Create the Directory Structure
+
+I created the required directory structure under `/tmp`:
+
+    sudo mkdir -p /tmp/d1/d2
+
+I then checked the existing SELinux contexts:
+
+    sudo ls -Zd /tmp/d1
+    sudo ls -Zd /tmp/d1/d2
+
+The directories initially had the SELinux context associated with their `/tmp` location.
+
+### 2. Change the Context Recursively with chcon
+
+I used `chcon` to recursively change the SELinux type:
+
+    sudo chcon -R -t etc_t /tmp/d1
+
+The `-R` option applied the change recursively to `/tmp/d1` and everything beneath it.
+
+I verified the new contexts:
+
+    sudo ls -Zd /tmp/d1
+    sudo ls -Zd /tmp/d1/d2
+
+### 3. Create a Persistent File-Context Mapping
+
+I created a persistent SELinux file-context rule using `semanage fcontext`:
+
+    sudo semanage fcontext -a -t etc_t "/tmp/d1(/.*)?"
+
+This created a persistent mapping specifying that `/tmp/d1` and its contents should use the `etc_t` SELinux type.
+
+### 4. Apply the Persistent Mapping
+
+I applied the persistent mapping to the filesystem using:
+
+    sudo restorecon -R /tmp/d1
+
+I verified the resulting contexts:
+
+    sudo ls -Zd /tmp/d1
+    sudo ls -Zd /tmp/d1/d2
+
+## Key Concepts
+
+There are three important commands to distinguish:
+
+### chcon
+
+    chcon -t TYPE PATH
+
+`chcon` directly changes the current SELinux context on a file or directory.
+
+Using:
+
+    chcon -R
+
+applies the change recursively.
+
+However, `chcon` does not create a persistent file-context mapping.
+
+### semanage fcontext
+
+    semanage fcontext -a -t TYPE "PATH_REGEX"
+
+`semanage fcontext` creates a persistent file-context mapping in the SELinux policy configuration.
+
+### restorecon
+
+    restorecon -R PATH
+
+`restorecon` applies the expected SELinux context based on the persistent file-context mapping.
+
+A useful mental model is:
+
+    semanage fcontext = define what the context should be
+    restorecon       = make the filesystem match that definition
+    chcon            = directly change the current label
+
+## Lessons Learned
+
+- SELinux contexts are labels used by SELinux when making access-control decisions.
+- `chcon` changes the current filesystem label but does not create a persistent mapping.
+- `semanage fcontext` creates a persistent file-context rule.
+- `restorecon` applies the persistent file-context rule to the filesystem.
+- The `-R` option means recursively apply the operation to the directory and its contents.
+- Persistence comes from the `semanage fcontext` rule, not from the `-R` option.
+
+---
