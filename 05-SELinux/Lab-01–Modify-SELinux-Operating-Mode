@@ -1,0 +1,95 @@
+# Lab 01 – Modify SELinux Operating Mode
+
+## Objective
+
+The objective of this lab was to modify the SELinux operating mode, reboot the system to apply configuration changes, and verify the resulting SELinux mode.
+
+## Procedure
+
+### 1. Check the Current SELinux Mode
+
+First, I checked the current SELinux operating mode:
+
+    sudo getenforce
+
+The command was used to record the initial SELinux mode before making any configuration changes.
+
+### 2. Modify the SELinux Configuration
+
+I opened the SELinux configuration file:
+
+    sudo vi /etc/selinux/config
+
+I modified the SELinux directive to:
+
+    SELINUX=disabled
+
+This configuration specifies that SELinux should be disabled when the system boots.
+
+### 3. Reboot the System
+
+I rebooted server30 to apply the configuration change:
+
+    sudo reboot
+
+### 4. Verify the Disabled Mode
+
+After the system restarted, I verified the SELinux mode:
+
+    sudo getenforce
+
+The system returned:
+
+    Disabled
+
+This confirmed that the configuration change had been successfully applied after reboot.
+
+### 5. Restore SELinux to Enforcing
+
+I opened the configuration file again:
+
+    sudo vi /etc/selinux/config
+
+I restored the directive to:
+
+    SELINUX=enforcing
+
+### 6. Reboot the System
+
+I rebooted the system again to apply the restored configuration:
+
+    sudo reboot
+
+### 7. Verify Enforcing Mode
+
+After the system restarted, I verified the SELinux mode:
+
+    sudo getenforce
+
+The system returned:
+
+    Enforcing
+
+This confirmed that SELinux had been successfully restored to enforcing mode.
+
+## Key Concepts
+
+SELinux has three primary operating modes:
+
+- Enforcing – SELinux policy is actively enforced and access violations are blocked.
+- Permissive – SELinux policy violations are logged, but access is not blocked.
+- Disabled – SELinux is not active.
+
+The `/etc/selinux/config` file specifies the SELinux mode that should be used during system boot.
+
+Changes between `enforcing` and `disabled` require a reboot to take effect.
+
+## Lessons Learned
+
+- `getenforce` can be used to check the current SELinux operating mode.
+- `/etc/selinux/config` controls the SELinux mode used during boot.
+- Changing SELinux to disabled requires a reboot.
+- Restoring `SELINUX=enforcing` and rebooting re-enables SELinux enforcement.
+- SELinux operating modes are separate from SELinux booleans.
+
+---
