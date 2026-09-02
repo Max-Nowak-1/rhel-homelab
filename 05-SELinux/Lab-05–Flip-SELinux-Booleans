@@ -1,0 +1,186 @@
+# Lab 05 – Flip SELinux Booleans
+
+## Objective
+
+The objective of this lab was to check the current value of the `ssh_use_tcpd` SELinux boolean, change its value, and verify the new state.
+
+## Procedure
+
+### 1. Check the Current Boolean Value
+
+I checked the current value of `ssh_use_tcpd`:
+
+    getsebool ssh_use_tcpd
+
+The command displayed whether the boolean was currently enabled or disabled.
+
+The lab also provided `setstatus` and `semanage` as alternative methods for checking SELinux configuration.
+
+### 2. Toggle the Boolean
+
+I used `setsebool` to change the boolean's runtime value.
+
+For example, to disable the boolean:
+
+    sudo setsebool ssh_use_tcpd 0
+
+The value `0` is equivalent to `off`.
+
+Similarly:
+
+    sudo setsebool ssh_use_tcpd off
+
+would also disable the boolean.
+
+To enable the boolean:
+
+    sudo setsebool ssh_use_tcpd 1
+
+or:
+
+    sudo setsebool ssh_use_tcpd on
+
+The boolean was toggled from its original state to the opposite state as required by the lab.
+
+### 3. Verify the New Value
+
+I verified the new value:
+
+    getsebool ssh_use_tcpd
+
+The output confirmed that the boolean had been successfully changed.
+
+## Key Concepts
+
+SELinux booleans provide a way to enable or disable specific SELinux policy behaviors without modifying the underlying policy.
+
+Boolean values can be represented as:
+
+    0 = off
+    1 = on
+
+The following commands modify the boolean:
+
+    setsebool boolean on
+    setsebool boolean off
+
+A persistent boolean change can be made using:
+
+    setsebool -P boolean on
+    setsebool -P boolean off
+
+The `-P` option makes the boolean setting persistent across reboots.
+
+## Important Distinction
+
+SELinux boolean values are separate from SELinux operating modes.
+
+Boolean:
+
+    0 / off = disabled
+    1 / on  = enabled
+
+SELinux operating modes:
+
+    Enforcing
+    Permissive
+    Disabled
+
+Therefore:
+
+    sudo setsebool ssh_use_tcpd 0
+
+does not put SELinux into permissive mode. It only disables the `ssh_use_tcpd` boolean.
+
+## Lessons Learned
+
+- `getsebool` can be used to check the current state of an SELinux boolean.
+- `setsebool` changes the runtime value of a boolean.
+- `0` and `off` both represent a disabled boolean.
+- `1` and `on` both represent an enabled boolean.
+- `setsebool -P` makes a boolean change persistent.
+- SELinux boolean states are completely separate from SELinux operating modes.
+
+---
+
+# Overall SELinux Lessons
+
+These labs reinforced several important SELinux administration concepts.
+
+### Context vs. Policy
+
+SELinux context is a security label attached to a subject or object.
+
+The policy contains the rules that determine what a labeled subject is allowed to do to a labeled object.
+
+A useful mental model is:
+
+    Context = label
+    Policy  = rules
+
+For processes, the SELinux type is referred to as the process domain.
+
+For files and other objects, the SELinux type identifies the object type used by policy.
+
+### File Context Management
+
+The major commands used for file-context management are:
+
+    chcon
+    semanage fcontext
+    restorecon
+
+The important distinction is:
+
+    chcon             = change the current label
+    semanage fcontext = create the persistent labeling rule
+    restorecon        = apply the expected persistent label
+
+### SELinux Port Management
+
+Network ports can be associated with SELinux port types using:
+
+    semanage port
+
+For example:
+
+    sudo semanage port -a -t http_port_t -p tcp 9005
+
+This changes the SELinux policy database but does not configure firewalld.
+
+### SELinux Booleans
+
+Booleans allow specific SELinux policy behaviors to be enabled or disabled.
+
+Runtime changes:
+
+    setsebool boolean on
+    setsebool boolean off
+
+Persistent changes:
+
+    setsebool -P boolean on
+    setsebool -P boolean off
+
+### SELinux and Other Security Controls
+
+SELinux is one security layer on a RHEL system. Other controls, such as firewalld, permissions, authentication, and access-control mechanisms, operate independently.
+
+Understanding how these controls interact is important when troubleshooting access problems on Linux systems.
+
+## Skills Demonstrated
+
+- Checking SELinux operating modes
+- Modifying `/etc/selinux/config`
+- Rebooting systems to apply SELinux configuration changes
+- Verifying SELinux state with `getenforce`
+- Inspecting SELinux file contexts
+- Modifying file contexts with `chcon`
+- Creating persistent file-context mappings with `semanage fcontext`
+- Applying file-context mappings with `restorecon`
+- Managing SELinux network port types with `semanage port`
+- Understanding SELinux port types vs. firewall rules
+- Copying files while preserving SELinux context
+- Managing SELinux booleans with `getsebool` and `setsebool`
+- Understanding runtime vs. persistent SELinux configuration
+- Distinguishing SELinux booleans from SELinux operating modes
