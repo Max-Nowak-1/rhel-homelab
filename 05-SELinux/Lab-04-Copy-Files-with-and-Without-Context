@@ -1,0 +1,89 @@
+# Lab 04 – Copy Files with and Without Context
+
+## Objective
+
+The objective of this lab was to compare SELinux contexts when copying files normally and when explicitly preserving the SELinux security context.
+
+## Part 1 – Copy a File Without Preserving Context
+
+### 1. Create the Source File
+
+I created a file under `/tmp`:
+
+    touch /tmp/sef1
+
+I checked its SELinux context:
+
+    ls -Z /tmp/sef1
+
+### 2. Copy the File
+
+I copied the file to `/usr/local`:
+
+    sudo cp /tmp/sef1 /usr/local/
+
+### 3. Compare the Contexts
+
+I compared the SELinux contexts of the source and destination files:
+
+    ls -Z /tmp/sef1 /usr/local/sef1
+
+The destination file received the SELinux context appropriate for its new location rather than automatically retaining the source file's context.
+
+This demonstrates that a normal `cp` operation can result in different SELinux contexts between the source and destination.
+
+A different context on the destination does not mean that the copy failed. It can be the expected behavior because SELinux contexts are associated with filesystem objects and their locations.
+
+---
+
+## Part 2 – Copy a File While Preserving Context
+
+### 1. Create the Source File
+
+I created a second file under `/tmp`:
+
+    touch /tmp/sef2
+
+I checked its SELinux context:
+
+    ls -Z /tmp/sef2
+
+### 2. Copy the File While Preserving Context
+
+I copied the file to `/var/local` using the `--preserve=context` option:
+
+    sudo cp --preserve=context /tmp/sef2 /var/local/
+
+### 3. Compare the Contexts
+
+I compared the SELinux contexts:
+
+    ls -Z /tmp/sef2 /var/local/sef2
+
+Using `--preserve=context` instructs `cp` to preserve the SELinux security context from the source file when creating the destination file.
+
+## Key Concepts
+
+A normal copy:
+
+    cp SOURCE DESTINATION
+
+does not necessarily preserve the source SELinux context. The destination file can receive a context appropriate for the destination location.
+
+Using:
+
+    cp --preserve=context SOURCE DESTINATION
+
+explicitly preserves the SELinux security context.
+
+This is an important distinction when working with files that require specific SELinux labels.
+
+## Lessons Learned
+
+- SELinux contexts can differ between a source file and its copied destination.
+- A different destination context does not automatically mean that `cp` failed.
+- Normal file copying can result in a destination context appropriate for its new location.
+- `cp --preserve=context` preserves the SELinux context from the source.
+- SELinux context behavior must be considered when moving or copying files between directories.
+
+---
