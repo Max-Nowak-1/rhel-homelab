@@ -1,0 +1,65 @@
+# Lab 22-3 – Add Network Port to Policy Database
+
+## Objective
+
+The objective of this lab was to add a network port to the SELinux policy database and associate the port with the `http_port_t` SELinux port type.
+
+## Procedure
+
+### 1. Add TCP Port 9005 to the SELinux Policy
+
+I used `semanage port` to add TCP port `9005` to the SELinux policy database:
+
+    sudo semanage port -a -t http_port_t -p tcp 9005
+
+The options used were:
+
+- `-a` – add a new port entry
+- `-t http_port_t` – assign the SELinux port type
+- `-p tcp` – specify the TCP protocol
+- `9005` – the network port being added
+
+### 2. Verify the Port
+
+I verified the port mapping:
+
+    sudo semanage port -l | grep 9005
+
+The output confirmed that TCP port `9005` was associated with `http_port_t`.
+
+## Key Concepts
+
+SELinux uses port types to determine which process domains are permitted to use particular ports.
+
+Associating port `9005` with `http_port_t` does not open the port in the firewall.
+
+SELinux and firewalld are separate security layers:
+
+    SELinux → determines whether a process is allowed to use the port
+    firewalld → controls whether network traffic is allowed through the firewall
+
+Both may need to be configured depending on the application and network requirements.
+
+### semanage port Options
+
+Common `semanage port` operations include:
+
+    -a    Add
+    -m    Modify
+    -d    Delete
+
+For example:
+
+    sudo semanage port -a -t http_port_t -p tcp 9005
+
+adds a new mapping.
+
+## Lessons Learned
+
+- `semanage port` manages persistent SELinux port-to-type mappings.
+- `http_port_t` is the SELinux type commonly associated with HTTP/HTTPS services.
+- Adding a port to SELinux policy does not open the port in firewalld.
+- The `-a` option adds a new SELinux port entry.
+- Port labeling is separate from firewall configuration.
+
+---
