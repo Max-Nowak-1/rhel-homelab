@@ -32,7 +32,7 @@ The goal of these labs was to understand not only the commands used to manage SE
 
 ## Labs
 
-### Lab 22-1 - Modify SELinux Operating Mode
+### Lab 01 - Modify SELinux Operating Mode
 
 **Objective:**  
 Modify the system's SELinux operating mode and verify the resulting state after reboot.
@@ -106,7 +106,7 @@ This lab reinforced the difference between SELinux's configured boot-time state 
 
 ---
 
-### Lab 22-2 - Modifying Context on Files
+### Lab 02 - Modifying Context on Files
 
 **Objective:**  
 Modify the SELinux context of files and create a persistent file-context rule.
@@ -173,7 +173,7 @@ The context itself does not determine whether an action is allowed. SELinux poli
 
 ---
 
-### Lab 22-3 - Add Network Port to Policy Database
+### Lab 03 - Add Network Port to Policy Database
 
 **Objective:**  
 Add a TCP network port to the SELinux policy database and associate it with an SELinux port type.
@@ -235,7 +235,7 @@ This lab helped clarify that SELinux does not simply label a port as "an HTTP po
 
 ---
 
-### Lab 22-4 - Copy Files with and Without Context
+### Lab 04 - Copy Files with and Without Context
 
 **Objective:**  
 Compare how SELinux contexts are handled when copying files normally and when explicitly preserving the source context.
@@ -291,7 +291,7 @@ A successful file copy does not necessarily mean the source and destination will
 
 ---
 
-### Lab 22-5 - Flip SELinux Booleans
+### Lab 05 - Flip SELinux Booleans
 
 **Objective:**  
 Modify an SELinux boolean and understand the difference between runtime and persistent boolean changes.
